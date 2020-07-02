@@ -10,8 +10,7 @@ pipeline {
       steps {
         sh '''
           echo "PATH = ${PATH}"
-          node -v
-          npm -v
+          maven -v
         '''
       }
     }
@@ -39,6 +38,17 @@ pipeline {
           }
         }
      }
+    
+    stage('Maven JUnit Test'){
+      steps {
+        sh 'mvn test'
+      }
+      post {
+        always {
+          junit 'target/surefire-reports/*.xml'
+        }
+      }
+    }
 
     stage('Cleanup Old Docker Artifacts'){
       steps{
@@ -51,7 +61,7 @@ pipeline {
     stage('Build Docker Image'){
       steps {
         script {
-          docker.build('node-hello-world')
+          docker.build('WCST-Services')
           }
       }
     }
@@ -60,7 +70,7 @@ pipeline {
 //      steps {
 //        script{
 //          docker.withRegistry('https://940093668739.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:pchong-aws-credentials'){
-//            docker.image('node-hello-world').push('latest')
+//            docker.image('WCST-Services').push('latest')
 //          }
 //        }
 //      }
