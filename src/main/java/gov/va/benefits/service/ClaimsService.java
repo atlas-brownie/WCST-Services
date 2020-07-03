@@ -8,10 +8,21 @@ import gov.va.benefits.dto.ClaimStatusResponse;
 /**
  * 
  * @author Laljith Antony
+ * 
+ *         Service responsible for uploading and monitoring of VA claims
+ *         processing...
  *
  */
 public interface ClaimsService {
 
-	public ClaimStatusResponse processClaimRequest(ClaimDetails responseDetails) throws IOException;
+	/**
+	 * Takes in claims request data and uploads the same to VA benefit processing
+	 * system and persist the request data for monitoring purposes...
+	 * 
+	 * @param aClaimDetails
+	 * @return
+	 * @throws IOException
+	 */
+	public ClaimStatusResponse processClaimRequest(ClaimDetails aClaimDetails) throws IOException;
 
 }

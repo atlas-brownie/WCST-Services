@@ -26,6 +26,8 @@ public class ClaimRecord implements Serializable {
 
 	private byte[] claimFileContent;
 
+	private String vaFileLocation;
+
 	private String vaTrackerId;
 
 	private String simpleTrackingNumber;

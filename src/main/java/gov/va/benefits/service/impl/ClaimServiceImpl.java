@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.Date;
 
+import javax.validation.ValidationException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,6 +30,10 @@ import gov.va.benefits.service.ClaimsService;
 /**
  * 
  * @author Laljith Antony
+ * 
+ *         Claim Service implementation responsible for validating the claim
+ *         processing requests, uploading valid requests and monitoring of VA
+ *         claims processing...
  *
  */
 @Service
@@ -35,6 +41,7 @@ public class ClaimServiceImpl implements ClaimsService {
 
 	private static final String WEB_KIT_FORM_BOUNDARY = "------WebKitFormBoundaryVfOwzCyvug0JmWYo";
 	private static final String CR_LF = "\r\n";
+
 	private static final Object SOURCE = "MyVSO";
 	private static final Object DOC_TYPE = "21-22";
 
@@ -49,12 +56,28 @@ public class ClaimServiceImpl implements ClaimsService {
 	private String claimsIntakePointerUrl;
 
 	@Override
-	public ClaimStatusResponse processClaimRequest(ClaimDetails aClaimsDetails) throws IOException {
-		ClaimRecord claimRecord = submitClaimRequest(aClaimsDetails);
+	public ClaimStatusResponse processClaimRequest(ClaimDetails aClaimDetails) throws IOException {
+		validateClaimRequest(aClaimDetails);
+
+		ClaimRecord claimRecord = submitClaimRequest(aClaimDetails);
 
 		ClaimStatusResponse statusResponse = saveClaimDetails(claimRecord);
 
 		return statusResponse;
+	}
+
+	private void validateClaimRequest(ClaimDetails aClaimDetails) throws ValidationException {
+		if (aClaimDetails.getClaimFile() == null) {
+			throw new ValidationException("Missing Claim File Info!");
+		}
+
+		if (StringUtils.isBlank(aClaimDetails.getClaimFile().getName())) {
+			throw new ValidationException("Claim File Name not Specified!");
+		}
+
+		if (aClaimDetails.getClaimFile().getSize() <= 0) {
+			throw new ValidationException("Claim File Cannot be Empty!");
+		}
 	}
 
 	private ClaimStatusResponse saveClaimDetails(ClaimRecord aClaimRecord) {
@@ -63,7 +86,8 @@ public class ClaimServiceImpl implements ClaimsService {
 		statusResponse.setLastName(aClaimRecord.getLastName());
 		statusResponse.setClaimStatus(aClaimRecord.getCurrentStatus());
 		statusResponse.setTrackingNumber(aClaimRecord.getSimpleTrackingNumber());
-		
+		statusResponse.setSubmissionDate(aClaimRecord.getSubmissionDate());
+
 		return statusResponse;
 	}
 
@@ -98,7 +122,7 @@ public class ClaimServiceImpl implements ClaimsService {
 		return claimRec;
 	}
 
-	private ClaimRecord populateClaimRecord(ClaimDetails aClaimDetails, Pair<String, String> endpointInfo)
+	private ClaimRecord populateClaimRecord(ClaimDetails aClaimDetails, Pair<String, String> aEndpointInfo)
 			throws IOException {
 		ClaimRecord claimRecord = new ClaimRecord();
 
@@ -108,20 +132,38 @@ public class ClaimServiceImpl implements ClaimsService {
 		claimRecord.setSsn(aClaimDetails.getSsn());
 		claimRecord.setZipCode(aClaimDetails.getZipCode());
 		claimRecord.setNumberRetries(0);
-		claimRecord.setVaTrackerId(endpointInfo.getRight());
+
+		claimRecord.setVaFileLocation(aEndpointInfo.getLeft());
+		claimRecord.setVaTrackerId(aEndpointInfo.getRight());
+
 		claimRecord.setCurrentStatus("Pending");
 
 		claimRecord.setClaimFileName(aClaimDetails.getClaimFile().getName());
 		claimRecord.setClaimFileContent(aClaimDetails.getClaimFile().getBytes());
 
 		// This needs to be fixed...
-		String trackingNumber = String.format("%s%s-%04s-%04s",
-				StringUtils.substring(aClaimDetails.getFirstName(), 0, 1),
-				StringUtils.substring(aClaimDetails.getLastName(), 0, 1), StringUtils.substring(aClaimDetails.getSsn(),
-						StringUtils.length(aClaimDetails.getSsn()) - 4, StringUtils.length(aClaimDetails.getSsn())));
+		String trackingNumber = generateSimpleTrackingNumber(claimRecord, aEndpointInfo);
 		claimRecord.setSimpleTrackingNumber(trackingNumber);
-		
+
 		return claimRecord;
+	}
+
+	/**
+	 * Fix this logic...
+	 * 
+	 * @param aClaimRecord
+	 * @param aEndpointInfo
+	 * @return
+	 */
+	private String generateSimpleTrackingNumber(ClaimRecord aClaimRecord, Pair<String, String> aEndpointInfo) {
+//		String trackingNumber = String.format("%s%s-%04s-%04s",
+//				StringUtils.substring(aClaimRecord.getFirstName(), 0, 1),
+//				StringUtils.substring(aClaimRecord.getLastName(), 0, 1), StringUtils.substring(aClaimRecord.getSsn(),
+//						StringUtils.length(aClaimRecord.getSsn()) - 4, StringUtils.length(aClaimRecord.getSsn())));
+//
+//		return trackingNumber;
+
+		return aEndpointInfo.getRight();
 	}
 
 	private String generateClaimPayload(ClaimDetails aClaimsDetails) throws IOException {

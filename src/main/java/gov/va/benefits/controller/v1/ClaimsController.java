@@ -24,6 +24,9 @@ import gov.va.benefits.service.ClaimsService;
 /**
  * 
  * @author Laljith Antony
+ * 
+ *         Spring MVC controller that exposes REST-end points to submit claims
+ *         and also monitoring statuses of submitted claims...
  *
  */
 @RestController
@@ -54,7 +57,13 @@ public class ClaimsController {
 			return extractValidationErrors(errorResponse, aResult);
 		}
 
-		ClaimStatusResponse statusResponse = claimsService.processClaimRequest(claimsDetail);
+		ClaimStatusResponse statusResponse = null;
+		try {
+			statusResponse = claimsService.processClaimRequest(claimsDetail);
+		} catch (Exception exp) {
+			ClaimStatusResponse errorResponse = new ClaimStatusResponse();
+			return extractValidationErrors(errorResponse, aResult, exp.getMessage());
+		}
 
 		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
 
@@ -62,11 +71,16 @@ public class ClaimsController {
 	}
 
 	private <T extends Serializable> PayloadWrapper<T> extractValidationErrors(T payload, BindingResult result) {
+		return extractValidationErrors(payload, result, "One or more errors found!");
+	}
+
+	private <T extends Serializable> PayloadWrapper<T> extractValidationErrors(T payload, BindingResult result,
+			String errorMessage) {
 		PayloadWrapper<T> payloadWrapper = new PayloadWrapper<>(payload);
 
 		payloadWrapper.setHasError(true);
 
-		payloadWrapper.setMessage("One or more errors found!");
+		payloadWrapper.setMessage(errorMessage);
 
 		Map<String, String> errorMap = new HashMap<>();
 		result.getAllErrors().forEach(err -> {
