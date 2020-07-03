@@ -61,20 +61,20 @@ pipeline {
     stage('Build Docker Image'){
       steps {
         script {
-          docker.build('WCST-Services')
+          docker.build('wcst-ui')
           }
       }
     }
     
-//    stage('Deploy Docker Image on AWS'){
-//      steps {
-//        script{
-//          docker.withRegistry('https://940093668739.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:pchong-aws-credentials'){
-//            docker.image('WCST-Services').push('latest')
-//          }
-//        }
-//      }
-//    }
+    stage('Deploy Docker Image on AWS'){
+      steps {
+        script{
+          docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/wcst-ui', 'ecr:us-east-1:pchong-aws-credentials'){
+            docker.image('wcst-ui').push('latest')
+          }
+        }
+      }
+    }
     
     stage('Remove unused docker image'){
       steps{
