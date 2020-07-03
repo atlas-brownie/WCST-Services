@@ -1,10 +1,17 @@
 package gov.va.benefits.service;
 
-import gov.va.benefits.dto.ClaimsDetails;
-import gov.va.benefits.dto.ClaimsStatusResponse;
+import java.io.IOException;
 
+import gov.va.benefits.dto.ClaimDetails;
+import gov.va.benefits.dto.ClaimStatusResponse;
+
+/**
+ * 
+ * @author Laljith Antony
+ *
+ */
 public interface ClaimsService {
 
-	public ClaimsStatusResponse submitClaim(ClaimsDetails responseDetails);
+	public ClaimStatusResponse processClaimRequest(ClaimDetails responseDetails) throws IOException;
 
 }

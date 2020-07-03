@@ -5,65 +5,60 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-import gov.va.benefits.dto.ClaimsDetails;
-import gov.va.benefits.dto.ClaimsStatusResponse;
+import gov.va.benefits.dto.ClaimDetails;
+import gov.va.benefits.dto.ClaimStatusResponse;
 import gov.va.benefits.dto.PayloadWrapper;
 import gov.va.benefits.service.ClaimsService;
 
+/**
+ * 
+ * @author Laljith Antony
+ *
+ */
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin(origins = "*")
 public class ClaimsController {
 	@Autowired
-	ClaimsService claimsService;
+	private SmartValidator validator;
 
-	@PutMapping("/claim")
-	public PayloadWrapper<ClaimsStatusResponse> uploadClaim(@RequestBody @Valid ClaimsDetails aClaimsDetails,
+	@Autowired
+	private ClaimsService claimsService;
+
+	@PutMapping(path = "/claims", headers = "content-type=multipart/form-data")
+	public PayloadWrapper<ClaimStatusResponse> uploadClaim(@RequestPart String firstName, @RequestPart String lastName,
+			@RequestPart String zipCode, @RequestPart String ssn, @RequestPart MultipartFile claimsFile,
 			BindingResult aResult) throws IOException {
+		ClaimDetails claimsDetail = new ClaimDetails();
+		claimsDetail.setFirstName(firstName);
+		claimsDetail.setLastName(lastName);
+		claimsDetail.setZipCode(zipCode);
+		claimsDetail.setSsn(ssn);
+		claimsDetail.setClaimFile(claimsFile);
+
+		validator.validate(claimsDetail, aResult);
+
 		if (aResult.hasErrors()) {
-			ClaimsStatusResponse errorResponse = new ClaimsStatusResponse();
+			ClaimStatusResponse errorResponse = new ClaimStatusResponse();
 			return extractValidationErrors(errorResponse, aResult);
 		}
 
-		ClaimsStatusResponse statusResponse = claimsService.submitClaim(aClaimsDetails);
+		ClaimStatusResponse statusResponse = claimsService.processClaimRequest(claimsDetail);
 
-		PayloadWrapper<ClaimsStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
+		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
 
 		return responsePayload;
-
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-//		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-//
-//		LinkedMultiValueMap<String, Object> reqBody = new LinkedMultiValueMap<>();
-//		reqBody.add("query", text);
-//		if(imgFile != null) {
-//			reqBody.add("file", imgFile.getResource());
-//		}
-//		HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(reqBody, headers);
-//
-//		RestTemplate restTemplate = new RestTemplate();
-//
-//		ResponseEntity<ResultsResponse> responseEntity = restTemplate.postForEntity(QUERY_BY_IMAGE_URI_DIRECT, httpEntity,
-//				ResultsResponse.class);
-//
-//		ResultsResponse response = responseEntity.getBody();
-//		
-//
-//		PayloadWrapper<Object> responsePayload = new PayloadWrapper<>(response.getResults());
-//		responsePayload.setMetadata(response.getAggs());
-//		return responsePayload;
 	}
 
 	private <T extends Serializable> PayloadWrapper<T> extractValidationErrors(T payload, BindingResult result) {
