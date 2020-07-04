@@ -43,7 +43,7 @@ pipeline {
     stage('Build Docker Image'){
       steps {
         script {
-          docker.build('wcst-ui-${BUILD_NUMBER}')
+          docker.build('wcst-ui-${BUILD_NUMBER}', "-f ./WCST-Services-Dev/docker/Dockerfile .")
           }
       }
     }
