@@ -64,5 +64,11 @@ pipeline {
       }
     }
     
+    stage('Deploy to ECS'){
+      steps{
+        sh './ecs.sh'
+      }
+    }
+    
   }
 }
