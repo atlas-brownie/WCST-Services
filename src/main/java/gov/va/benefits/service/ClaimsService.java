@@ -6,11 +6,9 @@ import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
 
 /**
+ * Service responsible for uploading and monitoring of VA claims processing...
  * 
- * @author Laljith Antony
- * 
- *         Service responsible for uploading and monitoring of VA claims
- *         processing...
+ * @author L Antony
  *
  */
 public interface ClaimsService {

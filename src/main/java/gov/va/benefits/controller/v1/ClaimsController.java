@@ -5,6 +5,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -22,17 +24,18 @@ import gov.va.benefits.dto.PayloadWrapper;
 import gov.va.benefits.service.ClaimsService;
 
 /**
+ * Spring MVC controller that exposes REST-end points to submit claims and also
+ * monitoring statuses of submitted claims...
  * 
- * @author Laljith Antony
- * 
- *         Spring MVC controller that exposes REST-end points to submit claims
- *         and also monitoring statuses of submitted claims...
+ * @author L Antony
  *
  */
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin(origins = "*")
 public class ClaimsController {
+	private static Logger LOGGER = LoggerFactory.getLogger(ClaimsController.class);
+
 	@Autowired
 	private SmartValidator validator;
 
@@ -41,19 +44,25 @@ public class ClaimsController {
 
 	@PutMapping(path = "/claims", headers = "content-type=multipart/form-data")
 	public PayloadWrapper<ClaimStatusResponse> uploadClaim(@RequestPart String firstName, @RequestPart String lastName,
-			@RequestPart String zipCode, @RequestPart String ssn, @RequestPart MultipartFile claimsFile,
+			@RequestPart String zipCode, @RequestPart String ssn, @RequestPart MultipartFile claimFile,
 			BindingResult aResult) throws IOException {
+
+		LOGGER.debug("begin uploadClaim()...");
+
 		ClaimDetails claimsDetail = new ClaimDetails();
 		claimsDetail.setFirstName(firstName);
 		claimsDetail.setLastName(lastName);
 		claimsDetail.setZipCode(zipCode);
 		claimsDetail.setSsn(ssn);
-		claimsDetail.setClaimFile(claimsFile);
+		claimsDetail.setClaimFileName(claimFile.getName());
+		claimsDetail.setClaimeFileContent(claimFile.getBytes());
 
 		validator.validate(claimsDetail, aResult);
 
 		if (aResult.hasErrors()) {
 			ClaimStatusResponse errorResponse = new ClaimStatusResponse();
+
+			LOGGER.debug("Request Validation Failed!");
 			return extractValidationErrors(errorResponse, aResult);
 		}
 
@@ -62,10 +71,14 @@ public class ClaimsController {
 			statusResponse = claimsService.processClaimRequest(claimsDetail);
 		} catch (Exception exp) {
 			ClaimStatusResponse errorResponse = new ClaimStatusResponse();
+
+			LOGGER.warn("Unable to process request!", exp);
 			return extractValidationErrors(errorResponse, aResult, exp.getMessage());
 		}
 
 		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
+
+		LOGGER.debug("end uploadClaim()...");
 
 		return responsePayload;
 	}

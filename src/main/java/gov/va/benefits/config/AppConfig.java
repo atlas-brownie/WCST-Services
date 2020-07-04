@@ -6,6 +6,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.ClassPathResource;
 
+/**
+ * Component responsible for initializing spring profile based configuration
+ * beans...
+ * 
+ * @author L Antony
+ *
+ */
 @Configuration
 public class AppConfig {
 	@Bean
@@ -18,7 +25,7 @@ public class AppConfig {
 		configurer.setLocation(resource);
 		return configurer;
 	}
-	
+
 	@Bean
 	@Profile("dev")
 	public PropertySourcesPlaceholderConfigurer fetchDevProperties() {
