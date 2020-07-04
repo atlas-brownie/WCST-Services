@@ -52,7 +52,7 @@ pipeline {
       steps {
         script{
           docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/wcst-services', 'ecr:us-east-1:pchong-aws-credentials'){
-            docker.image('wcst-services').push('latest')
+            docker.image('wcst-services').push('${BUILD_NUMBER}')
           }
         }
       }
