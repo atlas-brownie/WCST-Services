@@ -5,7 +5,7 @@ REPOSITORY_NAME=wcst-services
 CLUSTER=dev-services
 FAMILY=`sed -n 's/.*"family": "\(.*\)",/\1/p' taskdef.json`
 NAME=`sed -n 's/.*"name": "\(.*\)",/\1/p' taskdef.json`
-SERVICE_NAME=${NAME}-service
+SERVICE_NAME="${NAME}-service"
 
 #Store the repositoryUri as a variable
 
@@ -17,9 +17,7 @@ sed -e "s;%BUILD_NUMBER%;${BUILD_NUMBER};g" -e "s;%REPOSITORY_URI%;${REPOSITORY_
 
 #Register the task definition in the repository
 
-aws ecs register-task-definition --family ${FAMILY} --cli-input-json file://${WORKSPACE}/${NAME}-v_${BUILD_NUMBER}.json --region
-
-${REGION}
+aws ecs register-task-definition --family ${FAMILY} --cli-input-json file://${WORKSPACE}/${NAME}-v_${BUILD_NUMBER}.json --region ${REGION}
 
 SERVICES=`aws ecs describe-services --services ${SERVICE_NAME} --cluster ${CLUSTER} --region ${REGION} | jq .failures[]`
 
