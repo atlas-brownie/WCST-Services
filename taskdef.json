@@ -1,4 +1,5 @@
-[{
+[
+  {
   "ipcMode": null,
   "executionRoleArn": "arn:aws:iam::494587492891:role/my-test-cluster-task-exec-role",
   "containerDefinitions": [
