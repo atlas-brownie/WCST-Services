@@ -5,11 +5,6 @@ import java.util.Date;
 
 import lombok.Data;
 
-/**
- * 
- * @author Laljith Antony
- *
- */
 @Data
 public class ClaimRecord implements Serializable {
 	private static final long serialVersionUID = -4639348740237743929L;
@@ -28,9 +23,9 @@ public class ClaimRecord implements Serializable {
 
 	private String vaFileLocation;
 
-	private String vaTrackerId;
+	private String vaTrackerCode;
 
-	private String simpleTrackingNumber;
+	private String simpleTrackingCode;
 
 	private Date submissionDate;
 

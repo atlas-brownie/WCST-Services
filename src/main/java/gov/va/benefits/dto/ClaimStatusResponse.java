@@ -5,11 +5,6 @@ import java.util.Date;
 
 import lombok.Data;
 
-/**
- * 
- * @author Laljith Antony
- *
- */
 @Data
 public class ClaimStatusResponse implements Serializable {
 	private static final long serialVersionUID = -4639348740237743929L;
@@ -18,7 +13,9 @@ public class ClaimStatusResponse implements Serializable {
 
 	private String lastName;
 
-	private String trackingNumber;
+	private String trackingCode;
+
+	private String vaTrackingCode;
 
 	private String claimStatus;
 

@@ -3,3 +3,8 @@ server:
 spring:
   application:
     name: va-benefits-api
+    
+# Specifying the following key entries in mixed cases due to YAML/Spring-boot limitation...    
+vaAuthHeaderKey: apikey
+vaAuthHeaderValue: 
+vaClaimIntakePointerUrl: https://sandbox-api.va.gov/services/vba_documents/v1/uploads
