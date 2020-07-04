@@ -9,7 +9,6 @@ pipeline {
       steps {
         sh '''
           echo "PATH = ${PATH}"
-          echo $JAVA_HOME
           mvn -v
         '''
       }
@@ -63,5 +62,6 @@ pipeline {
         sh "docker image prune -f"
       }
     }
+    
   }
 }
