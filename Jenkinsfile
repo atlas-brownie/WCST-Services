@@ -9,7 +9,7 @@ pipeline {
       steps {
         sh '''
           echo "PATH = ${PATH}"
-          maven -v
+          mvn -v
         '''
       }
     }
