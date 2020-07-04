@@ -43,7 +43,7 @@ pipeline {
     stage('Build Docker Image'){
       steps {
         script {
-          docker.build('wcst-ui-${BUILD_NUMBER}', "-f ./docker/Dockerfile .")
+          docker.build('wcst-ui-${BUILD_NUMBER}', "-f ./docker/Dockerfile .", '-t wcst-ui-${BUILD_NUMBER}')
           }
       }
     }
@@ -52,7 +52,7 @@ pipeline {
       steps {
         script{
           docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/wcst-services', 'ecr:us-east-1:pchong-aws-credentials'){
-            docker.image('wcst-ui').push('${BUILD_NUMBER}')
+            docker.image('wcst-ui-${BUILD_NUMBER}').push()
           }
         }
       }
