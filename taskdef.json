@@ -1,7 +1,7 @@
 [
-  {
+{
   "ipcMode": null,
-  "executionRoleArn": "arn:aws:iam::494587492891:role/my-test-cluster-task-exec-role",
+  "executionRoleArn": "arn:aws:iam::494587492891:role/sto2-cicd-stack-task-exec-role",
   "containerDefinitions": [
     {
       "dnsSearchDomains": [],
@@ -10,9 +10,9 @@
         "logDriver": "awslogs",
         "secretOptions": [],
         "options": {
-          "awslogs-group": "/ecs/my-test-cluster-web-task",
+          "awslogs-group": "/ecs/sto2-cicd-stack-web-task",
           "awslogs-region": "us-east-1",
-          "awslogs-stream-prefix": "my-test-cluster"
+          "awslogs-stream-prefix": "sto2-cicd-stack"
         }
       },
       "entryPoint": [],
@@ -38,7 +38,7 @@
       "memoryReservation": 8192,
       "volumesFrom": [],
       "stopTimeout": null,
-      "image": "494587492891.dkr.ecr.us-east-1.amazonaws.com/my-test-cluster-ecr:latest",
+      "image": "494587492891.dkr.ecr.us-east-1.amazonaws.com/sto2-cicd-stack-ecr:ac0c117e",
       "startTimeout": null,
       "firelensConfiguration": null,
       "dependsOn": null,
@@ -55,18 +55,18 @@
       "dockerLabels": {},
       "systemControls": [],
       "privileged": null,
-      "name": "my-test-cluster-ecr"
+      "name": "sto2-cicd-stack-ecr"
     }
   ],
   "placementConstraints": [],
   "memory": "8192",
-  "taskRoleArn": "arn:aws:iam::494587492891:role/my-test-cluster-web-task-role",
+  "taskRoleArn": "arn:aws:iam::494587492891:role/sto2-cicd-stack-web-task-role",
   "compatibilities": [
     "EC2",
     "FARGATE"
   ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:494587492891:task-definition/my-test-cluster-web-task:1",
-  "family": "my-test-cluster-web-task",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:494587492891:task-definition/sto2-cicd-stack-web-task:11",
+  "family": "sto2-cicd-stack-web-task",
   "requiresAttributes": [
     {
       "targetId": null,
@@ -133,7 +133,7 @@
   "requiresCompatibilities": [],
   "networkMode": "awsvpc",
   "cpu": "1024",
-  "revision": 1,
+  "revision": 11,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
