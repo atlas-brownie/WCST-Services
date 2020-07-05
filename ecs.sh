@@ -5,7 +5,7 @@ REPOSITORY_NAME=wcst-services
 CLUSTER=dev-services
 FAMILY=sto2-cicd-stack-web-task
 NAME=sto2-cicd-stack-ecr
-SERVICE_NAME=sto2-cicd-stack-ecr-service
+SERVICE_NAME=dev-service
 
 #Store the repositoryUri as a variable
 
