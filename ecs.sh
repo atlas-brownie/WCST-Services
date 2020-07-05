@@ -1,11 +1,11 @@
 #!/bin/bash
 #Constants
 REGION=us-east-1
-REPOSITORY_NAME=wcst-services
-CLUSTER=dev-services
+REPOSITORY_NAME=dev-services-stack-ecr
+CLUSTER=dev-services-stack
 FAMILY=sto2-cicd-stack-web-task
 NAME=sto2-cicd-stack-ecr
-SERVICE_NAME=dev-service
+SERVICE_NAME=dev-services-stack-web
 
 #Store the repositoryUri as a variable
 
