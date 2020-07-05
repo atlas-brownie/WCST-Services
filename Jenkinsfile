@@ -43,7 +43,7 @@ pipeline {
     stage('Build Docker Image'){
       steps {
         script {
-          docker.build('wcst-services:${BUILD_NUMBER}', "-f ./docker/Dockerfile .")
+          docker.build('dev-services-stack-ecr:${BUILD_NUMBER}', "-f ./docker/Dockerfile .")
           }
       }
     }
@@ -52,7 +52,7 @@ pipeline {
       steps {
         script{
           docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/dev-services-stack-ecr', 'ecr:us-east-1:pchong-aws-credentials'){
-            docker.image('wcst-services:${BUILD_NUMBER}').push('${BUILD_NUMBER}')
+            docker.image('dev-services-stack-ecr:${BUILD_NUMBER}').push('${BUILD_NUMBER}')
           }
         }
       }
