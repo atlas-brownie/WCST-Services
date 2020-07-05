@@ -1,12 +1,20 @@
 {
   "ipcMode": null,
-  "executionRoleArn": "arn:aws:iam::494587492891:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::494587492891:role/sto2-cicd-stack-task-exec-role",
   "containerDefinitions": [
     {
-      "dnsSearchDomains": null,
+      "dnsSearchDomains": [],
       "environmentFiles": null,
-      "logConfiguration": null,
-      "entryPoint": null,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "secretOptions": null,
+        "options": {
+          "awslogs-group": "/ecs/sto2-cicd-stack-web-task",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "sto2-cicd-stack"
+        }
+      },
+      "entryPoint": [],
       "portMappings": [
         {
           "hostPort": 8080,
@@ -14,22 +22,22 @@
           "containerPort": 8080
         }
       ],
-      "command": null,
+      "command": [],
       "linuxParameters": null,
-      "cpu": 0,
+      "cpu": 1024,
       "environment": [],
       "resourceRequirements": null,
       "ulimits": null,
-      "dnsServers": null,
+      "dnsServers": [],
       "mountPoints": [],
       "workingDirectory": null,
       "secrets": null,
-      "dockerSecurityOptions": null,
+      "dockerSecurityOptions": [],
       "memory": null,
-      "memoryReservation": 128,
+      "memoryReservation": 8192,
       "volumesFrom": [],
       "stopTimeout": null,
-      "image": "494587492891.dkr.ecr.us-east-1.amazonaws.com/wcst-services:${BUILD_NUMBER}",
+      "image": "494587492891.dkr.ecr.us-east-1.amazonaws.com/wcst-services",
       "startTimeout": null,
       "firelensConfiguration": null,
       "dependsOn": null,
@@ -37,32 +45,57 @@
       "interactive": null,
       "healthCheck": null,
       "essential": true,
-      "links": null,
+      "links": [],
       "hostname": null,
       "extraHosts": null,
       "pseudoTerminal": null,
       "user": null,
       "readonlyRootFilesystem": null,
       "dockerLabels": null,
-      "systemControls": null,
+      "systemControls": [],
       "privileged": null,
-      "name": "wcst-services"
+      "name": "sto2-cicd-stack-ecr"
     }
   ],
   "placementConstraints": [],
-  "memory": null,
-  "taskRoleArn": "arn:aws:iam::494587492891:role/ecsTaskExecutionRole",
+  "memory": "8192",
+  "taskRoleArn": "arn:aws:iam::494587492891:role/sto2-cicd-stack-web-task-role",
   "compatibilities": [
-    "EC2"
+    "EC2",
+    "FARGATE"
   ],
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:494587492891:task-definition/dev-task-def:2",
-  "family": "dev-task-def",
+  "taskDefinitionArn": "arn:aws:ecs:us-east-1:494587492891:task-definition/sto2-cicd-stack-web-task:12",
+  "family": "sto2-cicd-stack-web-task",
   "requiresAttributes": [
     {
       "targetId": null,
       "targetType": null,
       "value": null,
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
       "name": "com.amazonaws.ecs.capability.ecr-auth"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
     },
     {
       "targetId": null,
@@ -81,15 +114,25 @@
       "targetType": null,
       "value": null,
       "name": "ecs.capability.execution-role-ecr-pull"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "targetId": null,
+      "targetType": null,
+      "value": null,
+      "name": "ecs.capability.task-eni"
     }
   ],
   "pidMode": null,
-  "requiresCompatibilities": [
-    "EC2"
-  ],
-  "networkMode": null,
-  "cpu": null,
-  "revision": 2,
+  "requiresCompatibilities": [],
+  "networkMode": "awsvpc",
+  "cpu": "1024",
+  "revision": 12,
   "status": "ACTIVE",
   "inferenceAccelerators": null,
   "proxyConfiguration": null,
