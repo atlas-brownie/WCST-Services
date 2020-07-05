@@ -67,7 +67,7 @@ pipeline {
     stage('Deploy to ECS'){
       steps{
 //        sh './ecs.sh'
-          sh 'aws ecs update-service --cluster dev-services-stack --service dev-services-stack-web --force-new-deployment'
+          sh 'aws ecs update-service --cluster dev-services-stack --service dev-services-stack-web --region us-east-1 --force-new-deployment'
       }
     }
     
