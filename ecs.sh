@@ -3,9 +3,9 @@
 REGION=us-east-1
 REPOSITORY_NAME=wcst-services
 CLUSTER=dev-services
-FAMILY=`sed -n 's/.*"family": "\(.*\)",/\1/p' taskdef.json`
-NAME=`sed -n 's/.*"name": "\(.*\)",/\1/p' taskdef.json`
-SERVICE_NAME=${NAME}-service
+FAMILY=dev-task-def
+NAME=wcst-services
+SERVICE_NAME=wcst-services-service
 
 #Store the repositoryUri as a variable
 
