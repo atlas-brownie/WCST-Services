@@ -21,6 +21,6 @@ public interface ClaimsService {
 	 * @return
 	 * @throws IOException
 	 */
-	public ClaimStatusResponse processClaimRequest(ClaimDetails aClaimDetails) throws IOException;
+	ClaimStatusResponse processClaimRequest(ClaimDetails aClaimDetails) throws IOException;
 
 }

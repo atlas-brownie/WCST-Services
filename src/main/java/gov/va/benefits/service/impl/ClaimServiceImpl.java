@@ -1,6 +1,8 @@
 package gov.va.benefits.service.impl;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Date;
 
@@ -13,6 +15,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -22,12 +25,14 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import gov.va.benefits.domain.ClaimRecord;
 import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
+import gov.va.benefits.service.CSPInterfaceService;
 import gov.va.benefits.service.ClaimsService;
 
 /**
@@ -55,6 +60,9 @@ public class ClaimServiceImpl implements ClaimsService {
 
 	@Value("${vaClaimIntakePointerUrl:https://sandbox-api.va.gov/services/vba_documents/v1/uploads}")
 	private String claimsIntakePointerUrl;
+
+	@Autowired
+	private CSPInterfaceService cspService;
 
 	/*
 	 * (non-Javadoc)
@@ -104,6 +112,8 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * @return
 	 */
 	private ClaimStatusResponse saveClaimDetails(ClaimRecord aClaimRecord) {
+		cspService.saveClaimDetails(aClaimRecord);
+
 		ClaimStatusResponse statusResponse = new ClaimStatusResponse();
 		statusResponse.setFirstName(aClaimRecord.getFirstName());
 		statusResponse.setLastName(aClaimRecord.getLastName());
@@ -153,9 +163,9 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		String eTagHeaderValue = httpclient.execute(httpPut, responseHandler);
 
-		validateResponse(eTagHeaderValue, payload);
-
 		ClaimRecord claimRec = populateClaimRecord(aClaimDetails, endpointInfo);
+
+		validateResponse(claimRec, eTagHeaderValue, payload);
 
 		return claimRec;
 	}
@@ -163,15 +173,67 @@ public class ClaimServiceImpl implements ClaimsService {
 	/**
 	 * Perform post validation of response received from VA application...
 	 * 
+	 * @param claimRec
 	 * @param eTagHeaderValue
 	 * @param payload
 	 * @throws IOException
 	 */
-	private void validateResponse(String eTagHeaderValue, String payload) throws IOException {
+	private void validateResponse(ClaimRecord claimRec, String eTagHeaderValue, String payload) throws IOException {
+		String requestStatus = extractRequestStatus(claimRec.getVaTrackerCode());
+
+		claimRec.setCurrentStatus(requestStatus);
+
 		if (eTagHeaderValue == null) {
 			return;
 		}
 
+		// if MD5 hashes don't match, throw exception here...
+		MessageDigest md5Instance = null;
+		try {
+			md5Instance = MessageDigest.getInstance("MD5");
+			md5Instance.update(payload.getBytes());
+
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		byte[] generatedDigest = md5Instance.digest();
+
+		byte[] receivedDigest = Base64.getDecoder().decode(eTagHeaderValue);
+
+		if (!MessageDigest.isEqual(generatedDigest, receivedDigest)) {
+			throw new IOException("Failed to Validate Message Digests!");
+		}
+	}
+
+	private String extractRequestStatus(String vaTrackingNumber) throws IOException, ClientProtocolException {
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+
+		HttpGet extractClient = new HttpGet(String.format("%s/%s", claimsIntakePointerUrl, vaTrackingNumber));
+
+		extractClient.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
+		extractClient.addHeader("accept", "application/json");
+
+		ResponseHandler<String> responseHandler = response -> {
+			int status = response.getStatusLine().getStatusCode();
+			if (status >= 200 && status < 300) {
+				HttpEntity entity = response.getEntity();
+				return entity != null ? EntityUtils.toString(entity) : null;
+			} else if (status == 403) {
+				throw new ClientProtocolException("Response status: " + status + " Unauthorized");
+			} else {
+				throw new ClientProtocolException("Unexpected response status: " + status);
+			}
+		};
+
+		String result = httpclient.execute(extractClient, responseHandler);
+
+		JSONObject jsonObj = new JSONObject(result);
+
+		String requestStatus = jsonObj.getJSONObject("data").getJSONObject("attributes").getString("status");
+
+		return requestStatus;
 	}
 
 	/**
@@ -223,12 +285,11 @@ public class ClaimServiceImpl implements ClaimsService {
 		long currentTimeSec = System.currentTimeMillis() / 1000;
 
 		String trackingNumber = StringUtils
-				.upperCase(String.format("%s%s-%4s-%4s-%4s", StringUtils.substring(aClaimRecord.getFirstName(), 0, 1),
+				.upperCase(String.format("%s%s%4s-%s", StringUtils.substring(aClaimRecord.getFirstName(), 0, 1),
 						StringUtils.substring(aClaimRecord.getLastName(), 0, 1),
 						StringUtils.substring(aClaimRecord.getSsn(), StringUtils.length(aClaimRecord.getSsn()) - 4,
 								StringUtils.length(aClaimRecord.getSsn())),
-						StringUtils.leftPad(Long.toHexString(currentTimeSec / 10000), 4, '0'),
-						StringUtils.leftPad(Long.toHexString(currentTimeSec % 10000), 4, '0')));
+						StringUtils.leftPad(Long.toHexString(currentTimeSec / 10000), 8, '0')));
 
 		System.out.println("Tracking Code:" + trackingNumber);
 
