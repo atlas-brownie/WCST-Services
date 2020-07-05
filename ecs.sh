@@ -3,9 +3,9 @@
 REGION=us-east-1
 REPOSITORY_NAME=wcst-services
 CLUSTER=dev-services
-FAMILY=sto2-cicd-stack-web-task
-NAME=dev
-SERVICE_NAME=dev-services
+FAMILY=dev-task-def
+NAME=wcst-services
+SERVICE_NAME=wcst-services-services
 
 #Store the repositoryUri as a variable
 
