@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -79,6 +82,34 @@ public class ClaimsController {
 		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
 
 		LOGGER.debug("end uploadClaim()...");
+
+		return responsePayload;
+	}
+
+	@GetMapping(path = "/uploads/{trackingNumber}")
+	public PayloadWrapper<String> getClaimStatus(@PathVariable String trackingNumber)
+			throws ClientProtocolException, IOException {
+		LOGGER.debug("begin getClaimStatus()...");
+
+		String status = claimsService.extractRequestStatusBySimpleTrackingCode(trackingNumber);
+
+		PayloadWrapper<String> responsePayload = new PayloadWrapper<>(status);
+
+		LOGGER.debug("end getClaimStatus()...");
+
+		return responsePayload;
+	}
+
+	@GetMapping(path = "/uploads/va/{vaTrackingNumber}")
+	public PayloadWrapper<String> getClaimStatusByVaTrackingCode(@PathVariable String vaTrackingNumber)
+			throws ClientProtocolException, IOException {
+		LOGGER.debug("begin getClaimStatusByVaTrackingCode()...");
+
+		String status = claimsService.extractRequestStatusByVaTrackingNumber(vaTrackingNumber);
+
+		PayloadWrapper<String> responsePayload = new PayloadWrapper<>(status);
+
+		LOGGER.debug("end getClaimStatusByVaTrackingCode()...");
 
 		return responsePayload;
 	}

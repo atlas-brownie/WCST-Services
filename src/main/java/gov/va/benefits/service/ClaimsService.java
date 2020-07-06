@@ -2,6 +2,8 @@ package gov.va.benefits.service;
 
 import java.io.IOException;
 
+import org.apache.http.client.ClientProtocolException;
+
 import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
 
@@ -21,6 +23,29 @@ public interface ClaimsService {
 	 * @return
 	 * @throws IOException
 	 */
-	public ClaimStatusResponse processClaimRequest(ClaimDetails aClaimDetails) throws IOException;
+	ClaimStatusResponse processClaimRequest(ClaimDetails aClaimDetails) throws IOException;
+
+	/**
+	 * Method that sends request to VA Benefits system and extracts the current
+	 * status of the claim based on specifiedVA tracking code...
+	 * 
+	 * @param vaTrackingNumber
+	 * @return
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 */
+	String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber) throws IOException, ClientProtocolException;
+
+	/**
+	 * Method that sends request to VA Benefits system and extracts the current
+	 * status of the claim based on specified simple tracking code...
+	 * 
+	 * @param simpleTrackingCode
+	 * @return
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 */
+	String extractRequestStatusBySimpleTrackingCode(String simpleTrackingCode)
+			throws IOException, ClientProtocolException;
 
 }

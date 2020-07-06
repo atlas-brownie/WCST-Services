@@ -5,6 +5,15 @@ spring:
     name: va-benefits-api
     
 # Specifying the following key entries in mixed cases due to YAML/Spring-boot limitation...    
+vaClaimIntakePointerUrl: https://sandbox-api.va.gov/services/vba_documents/v1/uploads
 vaAuthHeaderKey: apikey
 vaAuthHeaderValue: RrJGQZc6jpNp9NwKEn6GO2ZDq11MbdXm
-vaClaimIntakePointerUrl: https://sandbox-api.va.gov/services/vba_documents/v1/uploads
+
+performETagValidation: false
+persistClaimMetaData: false
+
+clientSystemId: MBL-WCST
+sourceDocumentType: 21-22
+
+awsAccessKey: 
+awsSecretKey: 

@@ -9,6 +9,8 @@ import lombok.Data;
 public class ClaimRecord implements Serializable {
 	private static final long serialVersionUID = -4639348740237743929L;
 
+	private String id;
+
 	private String firstName;
 
 	private String lastName;
