@@ -13,6 +13,7 @@ import javax.validation.ValidationException;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.Header;
@@ -190,7 +191,7 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		claimRec.setCurrentStatus(requestStatus);
 
-		if (!performETagValidation || eTagHeaderValue == null) {
+		if (!performETagValidation || StringUtils.isBlank(eTagHeaderValue)) {
 			return;
 		}
 
