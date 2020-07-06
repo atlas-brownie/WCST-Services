@@ -24,8 +24,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -39,6 +37,7 @@ import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
 import gov.va.benefits.service.CSPInterfaceService;
 import gov.va.benefits.service.ClaimsService;
+import gov.va.benefits.utils.HttpClientBean;
 
 /**
  * Claim Service implementation responsible for validating the claim processing
@@ -74,6 +73,11 @@ public class ClaimServiceImpl implements ClaimsService {
 
 	@Autowired
 	private CSPInterfaceService cspService;
+
+	@Autowired
+	private HttpClientBean httpClientBean;
+	
+	private static final String SSN_REGEX = "^(?!000|666)[0-8][0-9]{2}-(?!00)[0-9]{2}-(?!0000)[0-9]{4}$";
 
 	/*
 	 * (non-Javadoc)
@@ -112,6 +116,15 @@ public class ClaimServiceImpl implements ClaimsService {
 			throw new ValidationException("Claim File Cannot be Empty!");
 		}
 
+		if(StringUtils.isEmpty(aClaimDetails.getSsn())) {
+			throw new ValidationException("SSN Cannot be Empty!");
+		}
+		
+		
+		if(!aClaimDetails.getSsn().matches(SSN_REGEX)) {
+			throw new ValidationException("Invalid SSN specified!");
+		}
+		
 		// Optional Code to validate PDF content...
 	}
 
@@ -149,7 +162,6 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		String payload = generateClaimPayload(aClaimDetails);
 
-		CloseableHttpClient httpclient = HttpClients.createDefault();
 		HttpPut httpPut = new HttpPut(endpointInfo.getLeft());
 		httpPut.setHeader("Content-Type", "multipart/form-data");
 		httpPut.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
@@ -172,7 +184,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			}
 		};
 
-		String eTagHeaderValue = httpclient.execute(httpPut, responseHandler);
+		String eTagHeaderValue = httpClientBean.execute(httpPut, responseHandler);
 
 		ClaimRecord claimRec = populateClaimRecord(aClaimDetails, endpointInfo);
 
@@ -256,8 +268,6 @@ public class ClaimServiceImpl implements ClaimsService {
 	@Override
 	public String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber)
 			throws IOException, ClientProtocolException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-
 		HttpGet extractClient = new HttpGet(String.format("%s/%s", claimsIntakePointerUrl, vaTrackingNumber));
 
 		extractClient.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
@@ -275,7 +285,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			}
 		};
 
-		String result = httpclient.execute(extractClient, responseHandler);
+		String result = httpClientBean.execute(extractClient, responseHandler);
 
 		JSONObject jsonObj = new JSONObject(result);
 
@@ -329,7 +339,7 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		String metaDataStr = String.format(
 				"{\"veteranFirstName\": \"%s\",\"veteranLastName\": \"%s\",\"fileNumber\": \"%s\",\"zipCode\": \"%s\",\"source\": \"%s\",\"docType\": \"%s\"}",
-				aClaimsDetails.getFirstName(), aClaimsDetails.getLastName(), aClaimsDetails.getClaimFileName(),
+				aClaimsDetails.getFirstName(), aClaimsDetails.getLastName(), aClaimsDetails.getUnformattedSSN(),
 				aClaimsDetails.getZipCode(), sourceDocumentType, sourceDocumentType);
 
 		StringBuffer payloadBuff = new StringBuffer();
@@ -375,8 +385,6 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * @throws IOException
 	 */
 	private Pair<String, String> extractIntakeEndpoint() throws ClientProtocolException, IOException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-
 		HttpPost extractClient = new HttpPost(claimsIntakePointerUrl);
 
 		extractClient.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
@@ -394,7 +402,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			}
 		};
 
-		String result = httpclient.execute(extractClient, responseHandler);
+		String result = httpClientBean.execute(extractClient, responseHandler);
 
 		JSONObject jsonObj = new JSONObject(result);
 

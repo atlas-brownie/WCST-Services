@@ -9,6 +9,8 @@ vaClaimIntakePointerUrl: https://sandbox-api.va.gov/services/vba_documents/v1/up
 vaAuthHeaderKey: apikey
 vaAuthHeaderValue: RrJGQZc6jpNp9NwKEn6GO2ZDq11MbdXm
 
+claimMetaDataTable: development
+
 performETagValidation: false
 persistClaimMetaData: true
 

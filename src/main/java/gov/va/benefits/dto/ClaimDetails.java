@@ -5,6 +5,8 @@ import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.Data;
 
 @Data
@@ -33,4 +35,12 @@ public class ClaimDetails implements Serializable {
 	
 	@NotNull
 	private byte[] claimeFileContent;
+	
+	public String getUnformattedSSN() {
+		if(StringUtils.isEmpty(ssn)) {
+			return ssn;
+		}
+		
+		return ssn.replaceAll("-", "");
+	}
 }
