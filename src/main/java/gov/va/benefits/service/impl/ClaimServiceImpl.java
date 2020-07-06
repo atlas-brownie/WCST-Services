@@ -194,7 +194,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			return;
 		}
 
-		// if MD5 hashes don't match, throw exception here...
+		// if MD5 hashes don't match, throw an exception here...
 		MessageDigest md5Instance = null;
 		try {
 			md5Instance = MessageDigest.getInstance("MD5");
