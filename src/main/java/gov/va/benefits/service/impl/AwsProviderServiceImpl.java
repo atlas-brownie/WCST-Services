@@ -41,7 +41,7 @@ import gov.va.benefits.service.CSPInterfaceService;
  *
  */
 @Service
-public class AwsProviderService implements CSPInterfaceService {
+public class AwsProviderServiceImpl implements CSPInterfaceService {
 	private static Logger LOGGER = LoggerFactory.getLogger(ClaimServiceImpl.class);
 
 	private static final String ID_COLUMN = "id";
