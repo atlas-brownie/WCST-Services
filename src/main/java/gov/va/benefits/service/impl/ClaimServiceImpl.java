@@ -54,8 +54,11 @@ public class ClaimServiceImpl implements ClaimsService {
 	private static final String WEB_KIT_FORM_BOUNDARY = "------WebKitFormBoundaryVfOwzCyvug0JmWYo";
 	private static final String CR_LF = "\r\n";
 
-	private static final Object SOURCE = "MBL-WCST";
-	private static final Object DOC_TYPE = "21-22";
+	@Value("${clientSystemId:MBL-WCST}")
+	private String clientSystemId;
+
+	@Value("${sourceDocumentType:21-22}")
+	private String sourceDocumentType;
 
 	@Value("${vaAuthHeaderKey:apikey}")
 	private String vaAuthHeaderKey;
@@ -66,7 +69,7 @@ public class ClaimServiceImpl implements ClaimsService {
 	@Value("${vaClaimIntakePointerUrl:https://sandbox-api.va.gov/services/vba_documents/v1/uploads}")
 	private String claimsIntakePointerUrl;
 
-	@Value("${vaAuthHeaderValue:false}")
+	@Value("${performETagValidation:false}")
 	private boolean performETagValidation;
 
 	@Autowired
@@ -327,7 +330,7 @@ public class ClaimServiceImpl implements ClaimsService {
 		String metaDataStr = String.format(
 				"{\"veteranFirstName\": \"%s\",\"veteranLastName\": \"%s\",\"fileNumber\": \"%s\",\"zipCode\": \"%s\",\"source\": \"%s\",\"docType\": \"%s\"}",
 				aClaimsDetails.getFirstName(), aClaimsDetails.getLastName(), aClaimsDetails.getClaimFileName(),
-				aClaimsDetails.getZipCode(), SOURCE, DOC_TYPE);
+				aClaimsDetails.getZipCode(), sourceDocumentType, sourceDocumentType);
 
 		StringBuffer payloadBuff = new StringBuffer();
 

@@ -10,6 +10,10 @@ vaAuthHeaderKey: apikey
 vaAuthHeaderValue: 
 
 performETagValidation: false
+persistClaimMetaData: true
+
+clientSystemId: MBL-WCST
+sourceDocumentType: 21-22
 
 awsAccessKey: 
 awsSecretKey:

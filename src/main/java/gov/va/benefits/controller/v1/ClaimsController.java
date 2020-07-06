@@ -86,7 +86,7 @@ public class ClaimsController {
 		return responsePayload;
 	}
 
-	@GetMapping(path = "/claims/{trackingNumber}")
+	@GetMapping(path = "/uploads/{trackingNumber}")
 	public PayloadWrapper<String> getClaimStatus(@PathVariable String trackingNumber)
 			throws ClientProtocolException, IOException {
 		LOGGER.debug("begin getClaimStatus()...");
@@ -100,7 +100,7 @@ public class ClaimsController {
 		return responsePayload;
 	}
 
-	@GetMapping(path = "/claims/va/{vaTrackingNumber}")
+	@GetMapping(path = "/uploads/va/{vaTrackingNumber}")
 	public PayloadWrapper<String> getClaimStatusByVaTrackingCode(@PathVariable String vaTrackingNumber)
 			throws ClientProtocolException, IOException {
 		LOGGER.debug("begin getClaimStatusByVaTrackingCode()...");

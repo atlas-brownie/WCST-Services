@@ -1,6 +1,5 @@
 package gov.va.benefits.service.impl;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -55,6 +54,9 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 	@Value("${awsSecretKey:peP+JMJiprSioigCAfpXkQQhHpyw9nRicdelqSEk}")
 	private String awsSecretKey;
 
+	@Value("${persistClaimMetaData:true}")
+	private boolean persistClaimMetaData;
+
 	private AmazonDynamoDB dynamoDB;
 
 	private static long BASE_TIME_IN_SEC = 0;
@@ -95,6 +97,15 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 	 */
 	@Override
 	public ClaimRecord saveClaimDetails(ClaimRecord aClaimRecord) {
+		if (!persistClaimMetaData) {
+			aClaimRecord.setSimpleTrackingCode(aClaimRecord.getVaTrackerCode());
+
+			return aClaimRecord;
+		}
+
+		// Make change here later so that instead of using a generated UUID as the D
+		// value forthe record use simple tracking code and implement collision
+		// resolution mechanism...
 		String recordId = UUID.randomUUID().toString();
 
 		if (StringUtils.isNotBlank(aClaimRecord.getSimpleTrackingCode())) {
@@ -162,31 +173,6 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 		LOGGER.debug("Tracking Code:" + trackingNumber);
 
 		return trackingNumber;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * gov.va.benefits.service.CSPInterfaceService#purgeFileContent(gov.va.benefits.
-	 * domain.ClaimRecord)
-	 */
-	@Override
-	public void purgeFileContent(ClaimRecord aClaimRecord) throws IOException {
-		// TODO Auto-generated method stub
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see gov.va.benefits.service.CSPInterfaceService#purgeFileContent(java.lang.
-	 * String)
-	 */
-	@Override
-	public void purgeFileContent(String aClaimRecordId) throws IOException {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
