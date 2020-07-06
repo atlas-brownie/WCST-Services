@@ -16,5 +16,11 @@ public class BaseController {
 	public void redirect(HttpServletResponse response) throws IOException {
 		response.sendRedirect("/swagger-ui.html");
 	}
+	
+	@GetMapping(value = "/healthcheck")
+	@CrossOrigin(origins = "*")
+	public void redirectToHealthCheck(HttpServletResponse response) throws IOException {
+		response.sendRedirect("/actuator/health");
+	}
 
 }
