@@ -76,6 +76,8 @@ public class ClaimServiceImpl implements ClaimsService {
 
 	@Autowired
 	private HttpClientBean httpClientBean;
+	
+	private static final String SSN_REGEX = "^(?!000|666)[0-8][0-9]{2}-(?!00)[0-9]{2}-(?!0000)[0-9]{4}$";
 
 	/*
 	 * (non-Javadoc)
@@ -118,8 +120,8 @@ public class ClaimServiceImpl implements ClaimsService {
 			throw new ValidationException("SSN Cannot be Empty!");
 		}
 		
-		String ssnRegex = "^(?!000|666)[0-8][0-9]{2}-(?!00)[0-9]{2}-(?!0000)[0-9]{4}$";
-		if(!aClaimDetails.getSsn().matches(ssnRegex)) {
+		
+		if(!aClaimDetails.getSsn().matches(SSN_REGEX)) {
 			throw new ValidationException("Invalid SSN specified!");
 		}
 		
