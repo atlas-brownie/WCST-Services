@@ -45,7 +45,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	private static final String ID_COLUMN = "id";
 
-	@Value("${claimMetaDataTable:ClaimMetaData}")
+	@Value("${claimMetaDataTable}")
 	private String dynamoDBTableName;
 
 	@Value("${awsAccessKey:AKIAQYWCIK5QRGOXCAXO}")
