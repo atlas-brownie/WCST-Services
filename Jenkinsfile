@@ -6,38 +6,38 @@ pipeline {
   
 	stages {
 		stage('Notify Start') {
-            steps {
-                slackSend channel: '#dev-notifications',
-                          message: 'Jenkins services pipeline build started'
-            }
-        }
+            		steps {
+                	slackSend channel: '#dev-notifications',
+                        	  message: 'Jenkins services pipeline build started'
+            		}
+        	}
     
-    	stage('Initialize') {
-      		steps {
-        		sh '''
-          		echo "PATH = ${PATH}"
-          		echo $JAVA_HOME
-          		mvn -v
-        		'''
-      		}
-    	}
+    		stage('Initialize') {
+      			steps {
+        			sh '''
+          			echo "PATH = ${PATH}"
+          			echo $JAVA_HOME
+          			mvn -v
+        			'''
+      			}
+    		}
 		
-	stage('Code Quality') {
-		steps {
-			script {
-				def scannerHome = tool 'SonarQube';
-				withSonarQubeEnv("SonarQubeServer") {
-					sh 'mvn clean package sonar:sonar'
+		stage('Code Quality') {
+			steps {
+				script {
+					def scannerHome = tool 'SonarQube';
+					withSonarQubeEnv("SonarQubeServer") {
+						sh 'mvn clean package sonar:sonar'
+					}
 				}
 			}
 		}
-	}
 
-    	stage('Build') {
-      		steps {
-        		sh 'mvn -e -X clean install'
-      		}
-    	}
+    		stage('Build') {
+      			steps {
+        			sh 'mvn -e -X clean install'
+      			}
+    		}
 
 		stage('Maven JUnit Test'){
 			steps {
