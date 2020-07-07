@@ -23,3 +23,6 @@ sourceDocumentType: 21-22
 
 awsAccessKey: 
 awsSecretKey: 
+logging:
+   level:
+      gov.va.benefits: DEBUG
