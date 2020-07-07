@@ -5,13 +5,18 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.validation.ValidationException;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +48,7 @@ public class ClaimServiceImplTest {
 	private ClaimServiceImpl claimServiceImpl;
 
 	@Before
-	public void setUp() throws ClientProtocolException, IOException {
+	public void setUp() throws ClientProtocolException, IOException, JSONException {
 		final String mockETagValue = RandomStringUtils.randomNumeric(30);
 		final String mockLocation = "{\r\n" + "    \"data\": {\r\n" + "\r\n" + "        \"attributes\": {\r\n"
 				+ "            \"guid\": \"3ff64dcc-1fea-4984-890f-d2e75643127d\",\r\n"
@@ -64,6 +69,7 @@ public class ClaimServiceImplTest {
 					return mockETagValue;
 				}
 
+				// For HttpGet...
 				return mockStatus;
 			}
 		});
@@ -113,6 +119,7 @@ public class ClaimServiceImplTest {
 		String statusResponse = claimServiceImpl.extractRequestStatusBySimpleTrackingCode(mockSimpleTrackingCode);
 
 		assertNotNull("Missing Claim Status!", statusResponse);
+		Mockito.verify(httpClientBean).execute(Mockito.any(HttpGet.class), Mockito.any());
 	}
 
 	@Test
