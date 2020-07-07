@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.ContainerCredentialsProvider;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -74,10 +75,12 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@PostConstruct
 	public void initBean() {
-		AWSCredentialsProvider provider = new InstanceProfileCredentialsProvider();
-	    AWSCredentials credential = provider.getCredentials();
-	    dynamoDB = new AmazonDynamoDBClient(credential);
-		dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
+		if (persistClaimMetaData) {
+			AWSCredentialsProvider provider = new ContainerCredentialsProvider();
+		    AWSCredentials credential = provider.getCredentials();
+		    dynamoDB = new AmazonDynamoDBClient(credential);
+			dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
+		}
 
 	}
 
