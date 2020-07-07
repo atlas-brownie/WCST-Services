@@ -69,6 +69,11 @@ pipeline {
           sh 'aws ecs update-service --cluster stage-services-stack --service stage-services-stack-web --region us-east-1 --force-new-deployment'
       }
     }
-    
+    stage('Slack') {
+        steps {
+            slackSend channel: '#stage-notifications',
+                      message: 'Jenkins services pipeline build completed'
+        }
+    }    
   }
 }
