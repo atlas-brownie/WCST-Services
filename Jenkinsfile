@@ -73,7 +73,7 @@ pipeline {
     stage('Slack') {
         steps {
             slackSend channel: '#dev-notifications',
-                      message: 'Jenkins pipeline build completed'
+                      message: 'Jenkins services pipeline build completed'
         }
     }
   }
