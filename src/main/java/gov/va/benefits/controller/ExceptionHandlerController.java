@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.multipart.MultipartException;
 
 import gov.va.benefits.dto.PayloadWrapper;
 
@@ -36,6 +37,19 @@ public class ExceptionHandlerController {
 
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.OK)
+	@ExceptionHandler(MultipartException.class)
+	public PayloadWrapper<Void> handleMultipartException(HttpServletRequest req, MultipartException exp) {
+		logger.error(String.format("Exception Raised By Request [%s]!", req.getRequestURL()), exp);
+
+		PayloadWrapper<Void> payLoad = new PayloadWrapper<>();
+		payLoad.setHasError(true);
+		payLoad.setMessage("Failed to Upload Speicifed File!");
+
+		return payLoad;
+	}
+
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.OK)
 	@ExceptionHandler(Exception.class)
 	public PayloadWrapper<Void> handleError(HttpServletRequest req, Throwable exp) {
 		// Nothing can be done. Log the message and just return the error page...
@@ -47,7 +61,7 @@ public class ExceptionHandlerController {
 
 		return payLoad;
 	}
-	
+
 	private String extractErrorMessage(DataIntegrityViolationException exp) {
 		Throwable cause = exp.getMostSpecificCause();
 		if (cause == null) {
