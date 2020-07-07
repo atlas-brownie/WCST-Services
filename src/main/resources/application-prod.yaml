@@ -3,6 +3,10 @@ server:
 spring:
   application:
     name: va-benefits-api
+  http:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
     
 # Specifying the following key entries in mixed cases due to YAML/Spring-boot limitation...  
 vaClaimIntakePointerUrl: https://sandbox-api.va.gov/services/vba_documents/v1/uploads  
