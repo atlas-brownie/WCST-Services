@@ -21,8 +21,6 @@ persistClaimMetaData: false
 clientSystemId: MBL-WCST
 sourceDocumentType: 21-22
 
-awsAccessKey: 
-awsSecretKey: 
 logging:
    level:
       gov.va.benefits: DEBUG
