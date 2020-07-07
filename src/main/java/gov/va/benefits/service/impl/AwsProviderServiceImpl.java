@@ -49,13 +49,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@Value("${claimMetaDataTable}")
 	private String dynamoDBTableName;
-
-	@Value("${awsAccessKey:AKIAQYWCIK5QRGOXCAXO}")
-	private String awsAccessKey;
-
-	@Value("${awsSecretKey:peP+JMJiprSioigCAfpXkQQhHpyw9nRicdelqSEk}")
-	private String awsSecretKey;
-
+	
 	@Value("${persistClaimMetaData:true}")
 	private boolean persistClaimMetaData;
 
@@ -80,14 +74,6 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@PostConstruct
 	public void initBean() {
-		//BasicAWSCredentials credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
-		/*
-		 * DefaultAWSCredentialsProviderChain defaultAWSCredentialProviderChain = new
-		 * DefaultAWSCredentialsProviderChain(); AWSCredentials awsCredentials =
-		 * defaultAWSCredentialProviderChain.getCredentials(); dynamoDB = new
-		 * AmazonDynamoDBClient(awsCredentials);
-		 * dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
-		 */
 		AWSCredentialsProvider provider = new InstanceProfileCredentialsProvider();
 	    AWSCredentials credential = provider.getCredentials();
 	    dynamoDB = new AmazonDynamoDBClient(credential);
