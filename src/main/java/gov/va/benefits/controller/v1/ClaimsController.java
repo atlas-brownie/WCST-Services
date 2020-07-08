@@ -9,6 +9,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.SmartValidator;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,37 +48,38 @@ public class ClaimsController {
 	private ClaimsService claimsService;
 
 	@PostMapping(path = "/uploads", headers = "content-type=multipart/form-data")
-	public PayloadWrapper<ClaimStatusResponse> uploadClaim(@RequestPart String firstName, @RequestPart String lastName,
-			@RequestPart String zipCode, @RequestPart String ssn, @RequestPart MultipartFile claimFile,
-			BindingResult aResult) throws IOException {
+	public PayloadWrapper<ClaimStatusResponse> uploadClaim(@RequestParam String firstName, @RequestParam String lastName,
+			@RequestParam String zipCode, @RequestParam String ssn, @RequestPart MultipartFile claimFile) throws IOException {
 
 		LOGGER.debug("begin uploadClaim()...");
 
-		ClaimDetails claimsDetail = new ClaimDetails();
-		claimsDetail.setFirstName(firstName);
-		claimsDetail.setLastName(lastName);
-		claimsDetail.setZipCode(zipCode);
-		claimsDetail.setSsn(ssn);
-		claimsDetail.setClaimFileName(claimFile.getName());
-		claimsDetail.setClaimeFileContent(claimFile.getBytes());
+		ClaimDetails claimDetails = new ClaimDetails();
+		claimDetails.setFirstName(firstName);
+		claimDetails.setLastName(lastName);
+		claimDetails.setZipCode(zipCode);
+		claimDetails.setSsn(ssn);
+		claimDetails.setClaimFileName(claimFile.getName());
+		claimDetails.setClaimeFileContent(claimFile.getBytes());
+		
+		BindingResult bResult = new BeanPropertyBindingResult(claimDetails, "claimDetails");
 
-		validator.validate(claimsDetail, aResult);
+		validator.validate(claimDetails, bResult);
 
-		if (aResult.hasErrors()) {
+		if (bResult.hasErrors()) {
 			ClaimStatusResponse errorResponse = new ClaimStatusResponse();
 
 			LOGGER.debug("Request Validation Failed!");
-			return extractValidationErrors(errorResponse, aResult);
+			return extractValidationErrors(errorResponse, bResult);
 		}
 
 		ClaimStatusResponse statusResponse = null;
 		try {
-			statusResponse = claimsService.processClaimRequest(claimsDetail);
+			statusResponse = claimsService.processClaimRequest(claimDetails);
 		} catch (Exception exp) {
 			ClaimStatusResponse errorResponse = new ClaimStatusResponse();
 
 			LOGGER.warn("Unable to process request!", exp);
-			return extractValidationErrors(errorResponse, aResult, exp.getMessage());
+			return extractValidationErrors(errorResponse, bResult, exp.getMessage());
 		}
 
 		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
