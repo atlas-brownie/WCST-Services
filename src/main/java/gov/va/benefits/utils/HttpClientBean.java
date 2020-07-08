@@ -20,7 +20,7 @@ public class HttpClientBean {
 	public <T> T execute(final HttpUriRequest request, final ResponseHandler<? extends T> responseHandler)
 			throws IOException, ClientProtocolException {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
-
+		
 		return httpclient.execute(request, responseHandler);
 	}
 }

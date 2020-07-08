@@ -5,8 +5,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.validation.ValidationException;
 
@@ -16,7 +14,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,7 +82,7 @@ public class ClaimServiceImplTest {
 		ReflectionTestUtils.setField(claimServiceImpl, "clientSystemId", "clientSystemId");
 		ReflectionTestUtils.setField(claimServiceImpl, "sourceDocumentType", "sourceDocumentType");
 	}
-
+	
 	@Test
 	public void testProcessClaimRequest() throws IOException {
 		ClaimDetails claimDetails = new ClaimDetails();

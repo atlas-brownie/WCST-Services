@@ -3,7 +3,6 @@ package gov.va.benefits.service.impl;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +21,11 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -50,9 +52,6 @@ import gov.va.benefits.utils.HttpClientBean;
 public class ClaimServiceImpl implements ClaimsService {
 	private static Logger LOGGER = LoggerFactory.getLogger(ClaimServiceImpl.class);
 
-	private static final String WEB_KIT_FORM_BOUNDARY = "------WebKitFormBoundaryVfOwzCyvug0JmWYo";
-	private static final String CR_LF = "\r\n";
-
 	@Value("${clientSystemId:MBL-WCST}")
 	private String clientSystemId;
 
@@ -76,7 +75,7 @@ public class ClaimServiceImpl implements ClaimsService {
 
 	@Autowired
 	private HttpClientBean httpClientBean;
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -114,7 +113,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			throw new ValidationException("Claim File Cannot be Empty!");
 		}
 
-		if(StringUtils.isEmpty(aClaimDetails.getSsn())) {
+		if (StringUtils.isEmpty(aClaimDetails.getSsn())) {
 			throw new ValidationException("SSN Cannot be Empty!");
 		}
 	}
@@ -149,15 +148,26 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * @throws IOException
 	 */
 	private ClaimRecord submitClaimRequest(ClaimDetails aClaimDetails) throws IOException {
-		Pair<String, String> endpointInfo = extractIntakeEndpoint();
+		Pair<String, String> endpointInfo = extractIntakeEndpointInfo();
 
-		String payload = generateClaimPayload(aClaimDetails);
+		MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+		entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 
-		HttpPut httpPut = new HttpPut(endpointInfo.getLeft());
-		httpPut.setHeader("Content-Type", "multipart/form-data");
-		httpPut.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
-		StringEntity stringEntity = new StringEntity(payload);
-		httpPut.setEntity(stringEntity);
+		String metaDataStr = String.format(
+				"{\"veteranFirstName\": \"%s\",\"veteranLastName\": \"%s\",\"fileNumber\": \"%s\",\"zipCode\": \"%s\",\"source\": \"%s\",\"docType\": \"%s\"}",
+				aClaimDetails.getFirstName(), aClaimDetails.getLastName(),
+				StringUtils.leftPad(StringUtils.substring(aClaimDetails.getUnformattedSSN(), 0, 8), 8, "0"),
+				aClaimDetails.getZipCode(), sourceDocumentType, sourceDocumentType);
+
+		entityBuilder.addBinaryBody("metadata", metaDataStr.getBytes(), ContentType.APPLICATION_JSON, "metadata.json");
+		entityBuilder.addBinaryBody("content", aClaimDetails.getClaimeFileContent(),
+				ContentType.create("application/pdf"), aClaimDetails.getClaimFileName());
+
+		HttpEntity mutiPartHttpEntity = entityBuilder.build();
+		RequestBuilder reqBuilder = RequestBuilder.put(endpointInfo.getLeft());
+		reqBuilder.setEntity(mutiPartHttpEntity);
+
+		HttpUriRequest multipartRequest = reqBuilder.build();
 
 		ResponseHandler<String> responseHandler = response -> {
 			int status = response.getStatusLine().getStatusCode();
@@ -175,13 +185,27 @@ public class ClaimServiceImpl implements ClaimsService {
 			}
 		};
 
-		String eTagHeaderValue = httpClientBean.execute(httpPut, responseHandler);
+		String eTagHeaderValue = httpClientBean.execute(multipartRequest, responseHandler);
 
 		ClaimRecord claimRec = populateClaimRecord(aClaimDetails, endpointInfo);
 
-		validateResponse(claimRec, eTagHeaderValue, payload);
+		byte[] payloadBytes = extractPayloadSent(mutiPartHttpEntity);
+
+		validateResponse(claimRec, eTagHeaderValue, payloadBytes);
 
 		return claimRec;
+	}
+
+	private byte[] extractPayloadSent(HttpEntity aMutiPartHttpEntity) {
+		if (aMutiPartHttpEntity.isRepeatable()) {
+			try {
+				return aMutiPartHttpEntity.getContent().readAllBytes();
+			} catch (UnsupportedOperationException | IOException exp) {
+				LOGGER.info("Failed to read stream content!", exp);
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -192,12 +216,12 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * @param payload
 	 * @throws IOException
 	 */
-	private void validateResponse(ClaimRecord claimRec, String eTagHeaderValue, String payload) throws IOException {
+	private void validateResponse(ClaimRecord claimRec, String eTagHeaderValue, byte[] payload) throws IOException {
 		String requestStatus = extractRequestStatusByVaTrackingNumber(claimRec.getVaTrackerCode());
 
 		claimRec.setCurrentStatus(requestStatus);
 
-		if (!performETagValidation || StringUtils.isBlank(eTagHeaderValue)) {
+		if (!performETagValidation || StringUtils.isBlank(eTagHeaderValue) || payload == null) {
 			return;
 		}
 
@@ -210,7 +234,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			throw new IOException("Unable to initialize MD5 Digest!", exp);
 		}
 
-		md5Instance.update(payload.getBytes());
+		md5Instance.update(payload);
 		byte[] generatedDigest = md5Instance.digest();
 
 		byte[] receivedDigest;
@@ -316,55 +340,6 @@ public class ClaimServiceImpl implements ClaimsService {
 	}
 
 	/**
-	 * Generate 'stringified' representation of multipart request body that needs to
-	 * be sent to VA benefits application...
-	 * 
-	 * @param aClaimsDetails
-	 * @return
-	 * @throws IOException
-	 */
-	private String generateClaimPayload(ClaimDetails aClaimsDetails) throws IOException {
-		byte[] data = aClaimsDetails.getClaimeFileContent();
-
-		String binaryData = new String(data);
-
-		String metaDataStr = String.format(
-				"{\"veteranFirstName\": \"%s\",\"veteranLastName\": \"%s\",\"fileNumber\": \"%s\",\"zipCode\": \"%s\",\"source\": \"%s\",\"docType\": \"%s\"}",
-				aClaimsDetails.getFirstName(), aClaimsDetails.getLastName(), aClaimsDetails.getUnformattedSSN(),
-				aClaimsDetails.getZipCode(), sourceDocumentType, sourceDocumentType);
-
-		StringBuffer payloadBuff = new StringBuffer();
-
-		payloadBuff.append(WEB_KIT_FORM_BOUNDARY);
-		payloadBuff.append(CR_LF);
-		payloadBuff.append("Content-Disposition: form-data; name='metadata'; filename='metadata.json'");
-		payloadBuff.append(CR_LF);
-		payloadBuff.append("Content-Type: application/json");
-		payloadBuff.append(CR_LF);
-		payloadBuff.append(CR_LF);
-		payloadBuff.append("");
-		payloadBuff.append(CR_LF);
-		payloadBuff.append(metaDataStr);
-		payloadBuff.append(CR_LF);
-		payloadBuff.append(WEB_KIT_FORM_BOUNDARY);
-		payloadBuff.append(CR_LF);
-		payloadBuff.append(String.format("Content-Disposition: form-data; name='content'; filename='%s'",
-				aClaimsDetails.getClaimFileName()));
-		payloadBuff.append(CR_LF);
-		payloadBuff.append("Content-Type: application/pdf");
-		payloadBuff.append(CR_LF);
-		payloadBuff.append("");
-		payloadBuff.append(CR_LF);
-		payloadBuff.append(binaryData);
-		payloadBuff.append(CR_LF);
-		payloadBuff.append(WEB_KIT_FORM_BOUNDARY);
-
-		String encodedPayload = Base64.getEncoder().encodeToString(payloadBuff.toString().getBytes());
-
-		return "data:multipart/form-data;base64,".concat(encodedPayload);
-	}
-
-	/**
 	 * Hits VA Benefits' REST-End point with an HTTP Post request and retrieves the
 	 * target end-point URL to put claim file info and tracking number details for
 	 * the same. The method returns a Pair and the first element of the pair will be
@@ -375,7 +350,7 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	private Pair<String, String> extractIntakeEndpoint() throws ClientProtocolException, IOException {
+	private Pair<String, String> extractIntakeEndpointInfo() throws ClientProtocolException, IOException {
 		HttpPost extractClient = new HttpPost(claimsIntakePointerUrl);
 
 		extractClient.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
