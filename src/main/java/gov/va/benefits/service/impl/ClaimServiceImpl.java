@@ -12,6 +12,7 @@ import javax.validation.ValidationException;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -199,7 +200,7 @@ public class ClaimServiceImpl implements ClaimsService {
 	private byte[] extractPayloadSent(HttpEntity aMutiPartHttpEntity) {
 		if (aMutiPartHttpEntity.isRepeatable()) {
 			try {
-				return aMutiPartHttpEntity.getContent().readAllBytes();
+				return IOUtils.toByteArray(aMutiPartHttpEntity.getContent());
 			} catch (UnsupportedOperationException | IOException exp) {
 				LOGGER.info("Failed to read stream content!", exp);
 			}
