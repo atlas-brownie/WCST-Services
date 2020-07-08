@@ -6,9 +6,9 @@ COPY pom.xml /usr/src/app
 RUN mvn -f /usr/src/app/pom.xml clean package
 
 FROM openjdk:11-jre-slim
-#RUN apt-get update
+
 COPY --from=builder usr/src/app/target/*.jar app.jar
-#COPY --from=builder /biuld/libs/*.jar app.jar
+
 # ARG JAR_FILE
 # ADD target/${JAR_FILE} app.jar
 EXPOSE 8080
