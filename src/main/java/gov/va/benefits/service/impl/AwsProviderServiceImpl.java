@@ -29,6 +29,9 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
@@ -115,37 +118,29 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 			aClaimRecord.setSimpleTrackingCode(generateSimpleTrackingCode(aClaimRecord));
 		}
 
-		Map<String, AttributeValue> itemRec = new HashMap<String, AttributeValue>();
-
-		itemRec.put(ID_COLUMN, new AttributeValue(recordId));
-		itemRec.put("firstName", new AttributeValue(aClaimRecord.getFirstName()));
-		itemRec.put("lastName", new AttributeValue(aClaimRecord.getLastName()));
-		itemRec.put("zipCode", new AttributeValue(aClaimRecord.getZipCode()));
-		itemRec.put("ssn", new AttributeValue(aClaimRecord.getSsn()));
-
-		itemRec.put("simpleTrackingCode", new AttributeValue(aClaimRecord.getSimpleTrackingCode()));
-		itemRec.put("currentStatus", new AttributeValue(aClaimRecord.getCurrentStatus()));
-
-		itemRec.put("vaFileLocation", new AttributeValue(aClaimRecord.getVaFileLocation()));
-		itemRec.put("vaTrackerCode", new AttributeValue(aClaimRecord.getVaTrackerCode()));
-
-		itemRec.put("claimFileName", new AttributeValue(aClaimRecord.getClaimFileName()));
-		itemRec.put("claimFileName", new AttributeValue(aClaimRecord.getClaimFileName()));
-
 		DateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 		dateFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
 		String dateTimeStr = dateFmt.format(aClaimRecord.getSubmissionDate());
-		itemRec.put("submissionDate", new AttributeValue(dateTimeStr));
+	
+		Item item = new Item()
+				.withPrimaryKey("id", recordId)
+				.withString("firstName", aClaimRecord.getFirstName())
+				.withString("lastName", aClaimRecord.getLastName())
+				.withString("zipCode", aClaimRecord.getZipCode())
+				.withString("ssn", aClaimRecord.getSsn())
+				// .withString("simpleTrackingCode", aClaimRecord.getSimpleTrackingCode())
+				.withString("currentStatus", aClaimRecord.getCurrentStatus())
+				.withString("vaFileLocation", aClaimRecord.getVaFileLocation())
+				.withString("vaTrackerCode", aClaimRecord.getVaTrackerCode())
+				.withString("claimFileName", aClaimRecord.getClaimFileName())
+				.withString("submissionDate", dateTimeStr)
+				.withString("lastUpdatedDate", dateTimeStr)
+				.withString("vaTrackerCode", aClaimRecord.getVaTrackerCode());
 
-		if (aClaimRecord.getLastUpdatedDate() == null) {
-			aClaimRecord.setLastUpdatedDate(new Date());
-		}
-
-		dateTimeStr = dateFmt.format(aClaimRecord.getLastUpdatedDate());
-		itemRec.put("lastUpdatedDate", new AttributeValue(dateTimeStr));
-
-		dynamoDB.putItem(dynamoDBTableName, itemRec);
-
+		DynamoDB db = new DynamoDB(dynamoDB);
+		Table table = db.getTable(dynamoDBTableName);
+		LOGGER.debug("Saving .......Record [{}] in DB.", recordId);
+		table.putItem(item);
 		LOGGER.debug("Saved Record [{}] in DB.", recordId);
 
 		aClaimRecord.setId(recordId);
