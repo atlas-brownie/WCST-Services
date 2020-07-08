@@ -22,16 +22,16 @@ pipeline {
       			}
     		}
 
-		stage('Code Quality') {
-			steps {
-				script {
-					def scannerHome = tool 'SonarQube';
-					withSonarQubeEnv("SonarQubeServer") {
-						sh 'mvn clean package sonar:sonar'
-					}
-				}
-			}
-		}
+//		stage('Code Quality') {
+//			steps {
+//				script {
+//					def scannerHome = tool 'SonarQube';
+//					withSonarQubeEnv("SonarQubeServer") {
+//						sh 'mvn clean package sonar:sonar'
+//					}
+//				}
+//			}
+//		}
 
     		stage('Build') {
       			steps {
