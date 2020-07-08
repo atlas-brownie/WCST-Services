@@ -22,8 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.ContainerCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -49,13 +50,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@Value("${claimMetaDataTable}")
 	private String dynamoDBTableName;
-
-	@Value("${awsAccessKey:AKIAQYWCIK5QRGOXCAXO}")
-	private String awsAccessKey;
-
-	@Value("${awsSecretKey:peP+JMJiprSioigCAfpXkQQhHpyw9nRicdelqSEk}")
-	private String awsSecretKey;
-
+	
 	@Value("${persistClaimMetaData:true}")
 	private boolean persistClaimMetaData;
 
@@ -80,11 +75,13 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@PostConstruct
 	public void initBean() {
-		//BasicAWSCredentials credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
-		DefaultAWSCredentialsProviderChain defaultAWSCredentialProviderChain = new  DefaultAWSCredentialsProviderChain(); 
-		AWSCredentials awsCredentials =  defaultAWSCredentialProviderChain.getCredentials(); 
-		dynamoDB = new AmazonDynamoDBClient(awsCredentials);
-		dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
+		if (persistClaimMetaData) {
+			AWSCredentialsProvider provider = new ContainerCredentialsProvider();
+		    AWSCredentials credential = provider.getCredentials();
+		    dynamoDB = new AmazonDynamoDBClient(credential);
+			dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
+		}
+
 	}
 
 	@PreDestroy
