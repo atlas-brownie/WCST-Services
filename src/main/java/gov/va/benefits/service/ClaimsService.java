@@ -1,11 +1,14 @@
 package gov.va.benefits.service;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.ClientProtocolException;
 
 import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
+import gov.va.benefits.dto.DataExchangeJounalEntry;
 
 /**
  * Service responsible for uploading and monitoring of VA claims processing...
@@ -34,7 +37,8 @@ public interface ClaimsService {
 	 * @throws IOException
 	 * @throws ClientProtocolException
 	 */
-	String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber) throws IOException, ClientProtocolException;
+	Pair<String, List<DataExchangeJounalEntry>> extractRequestStatusByVaTrackingNumber(String vaTrackingNumber)
+			throws IOException, ClientProtocolException;
 
 	/**
 	 * Method that sends request to VA Benefits system and extracts the current
@@ -45,7 +49,7 @@ public interface ClaimsService {
 	 * @throws IOException
 	 * @throws ClientProtocolException
 	 */
-	String extractRequestStatusBySimpleTrackingCode(String simpleTrackingCode)
+	Pair<String, List<DataExchangeJounalEntry>> extractRequestStatusBySimpleTrackingCode(String simpleTrackingCode)
 			throws IOException, ClientProtocolException;
 
 }
