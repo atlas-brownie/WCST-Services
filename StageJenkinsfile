@@ -61,7 +61,7 @@ pipeline {
 		stage('Build Docker Image'){
 			steps {
 				script {
-					docker.build('stage-services-stack-ecr', "-f ./docker/Dockerfile .")
+					docker.build('stage1-services-stack-ecr', "-f ./docker/Dockerfile .")
 				}
 			}
 		}
@@ -69,8 +69,8 @@ pipeline {
 		stage('Deploy Docker Image on AWS'){
 			steps {
 				script{
-					docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/stage-services-stack-ecr', 'ecr:us-east-1:pchong-aws-credentials'){
-						docker.image('stage-services-stack-ecr').push('latest')
+					docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/stage1-services-stack-ecr', 'ecr:us-east-1:pchong-aws-credentials'){
+						docker.image('stage1-services-stack-ecr').push('latest')
 					}
 				}
 			}
@@ -84,7 +84,7 @@ pipeline {
 		
 		stage('Deploy to ECS'){
 			steps{
-				sh 'aws ecs update-service --cluster stage-services-stack --service stage-services-stack-web --region us-east-1 --force-new-deployment'
+				sh 'aws ecs update-service --cluster stage1-services-stack --service stage1-services-stack-web --region us-east-1 --force-new-deployment'
 			}
 		}
 	}
