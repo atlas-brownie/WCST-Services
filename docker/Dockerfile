@@ -13,6 +13,4 @@ COPY --from=builder usr/src/app/target/*.jar app.jar
 # ADD target/${JAR_FILE} app.jar
 EXPOSE 8080
 
-ENTRYPOINT exec java $JAVA_OPTS -jar /app.jar
-
-ENV spring.profiles.active=dev
+ENTRYPOINT exec java $JAVA_OPTS -Dspring.profiles.active=dev -jar /app.jar
