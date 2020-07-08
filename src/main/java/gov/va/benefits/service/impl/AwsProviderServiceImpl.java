@@ -50,7 +50,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@Value("${claimMetaDataTable}")
 	private String dynamoDBTableName;
-	
+
 	@Value("${persistClaimMetaData:true}")
 	private boolean persistClaimMetaData;
 
@@ -77,8 +77,8 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 	public void initBean() {
 		if (persistClaimMetaData) {
 			AWSCredentialsProvider provider = new ContainerCredentialsProvider();
-		    AWSCredentials credential = provider.getCredentials();
-		    dynamoDB = new AmazonDynamoDBClient(credential);
+			AWSCredentials credential = provider.getCredentials();
+			dynamoDB = new AmazonDynamoDBClient(credential);
 			dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
 		}
 
@@ -98,14 +98,16 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 	 */
 	@Override
 	public ClaimRecord saveClaimDetails(ClaimRecord aClaimRecord) {
+		LOGGER.debug("begin saveClaimDetails()...");
+
 		if (!persistClaimMetaData) {
 			aClaimRecord.setSimpleTrackingCode(aClaimRecord.getVaTrackerCode());
 
 			return aClaimRecord;
 		}
 
-		// Make change here later so that instead of using a generated UUID as the D
-		// value forthe record use simple tracking code and implement collision
+		// Make change here later so that instead of using a generated UUID as the ID
+		// value for the record use simple tracking code and implement collision
 		// resolution mechanism...
 		String recordId = UUID.randomUUID().toString();
 
@@ -144,7 +146,11 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 		dynamoDB.putItem(dynamoDBTableName, itemRec);
 
+		LOGGER.debug("Saved Record [{}] in DB.", recordId);
+
 		aClaimRecord.setId(recordId);
+
+		LOGGER.debug("end saveClaimDetails()...");
 
 		return aClaimRecord;
 	}
