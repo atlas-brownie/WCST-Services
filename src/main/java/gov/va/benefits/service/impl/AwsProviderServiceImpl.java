@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -31,6 +33,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.ItemCollection;
+import com.amazonaws.services.dynamodbv2.document.ScanOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
@@ -114,7 +118,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 		// resolution mechanism...
 		String recordId = UUID.randomUUID().toString();
 
-		if (StringUtils.isNotBlank(aClaimRecord.getSimpleTrackingCode())) {
+		if (StringUtils.isEmpty(aClaimRecord.getSimpleTrackingCode())) {
 			aClaimRecord.setSimpleTrackingCode(generateSimpleTrackingCode(aClaimRecord));
 		}
 
@@ -128,7 +132,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 				.withString("lastName", aClaimRecord.getLastName())
 				.withString("zipCode", aClaimRecord.getZipCode())
 				.withString("ssn", aClaimRecord.getSsn())
-				// .withString("simpleTrackingCode", aClaimRecord.getSimpleTrackingCode())
+				.withString("simpleTrackingCode", aClaimRecord.getSimpleTrackingCode())
 				.withString("currentStatus", aClaimRecord.getCurrentStatus())
 				.withString("vaFileLocation", aClaimRecord.getVaFileLocation())
 				.withString("vaTrackerCode", aClaimRecord.getVaTrackerCode())
@@ -210,8 +214,31 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 	 */
 	@Override
 	public Set<ClaimRecord> findClaimRecord(Map<String, String> aSearchCriteria) {
-		// TODO Auto-generated method stub
-		return null;
+		String simpleTrackingCode = aSearchCriteria.get("simpleTrackingCode");
+		Set<ClaimRecord> claimRecordSet = new HashSet<ClaimRecord>();
+		ClaimRecord claimRecord = new ClaimRecord();		
+		try {			
+			Map<String, Object> expressionAttributeValues = new HashMap<String, Object>(); 
+			expressionAttributeValues.put(":simpleTrackingCode", simpleTrackingCode); 		   
+			DynamoDB db = new DynamoDB(dynamoDB);
+			Table table = db.getTable(dynamoDBTableName);
+			LOGGER.debug("retrieving record by short code {}", simpleTrackingCode);
+			ItemCollection<ScanOutcome> items = table.scan ( 
+					"simpleTrackingCode = :simpleTrackingCode",                                 
+					null,null,                                           
+					expressionAttributeValues);			         
+			Iterator<Item> iterator = items.iterator(); 				
+			while (iterator.hasNext()) {
+				Item item = iterator.next();
+				LOGGER.debug("Retrieved record VA code {}",item.getString("vaTrackerCode"));
+				claimRecord.setVaTrackerCode(item.getString("vaTrackerCode"));
+				claimRecordSet.add(claimRecord);
+			}
+		} catch (Exception e) {
+			LOGGER.error("Exception retireving  record {}" , simpleTrackingCode, e);
+		}
+
+		return claimRecordSet;
 	}
 
 }
