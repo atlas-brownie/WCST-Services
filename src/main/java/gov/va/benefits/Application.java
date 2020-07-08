@@ -17,8 +17,14 @@ import org.springframework.context.ApplicationContext;
 public class Application {
 
 	public static void main(String[] args) {
-		if (StringUtils.isEmpty(System.getenv("spring.profiles.active"))) {
-			System.setProperty("spring.profiles.active", "local");
+		if (StringUtils.isEmpty(System.getProperty("spring.profiles.active"))) {
+			String profileVal = System.getenv("profile");
+
+			if (StringUtils.isNotEmpty(profileVal)) {
+				System.setProperty("spring.profiles.active", profileVal);
+			} else {
+				System.setProperty("spring.profiles.active", "local");
+			}
 		}
 
 		ApplicationContext ctx = SpringApplication.run(Application.class, args);
