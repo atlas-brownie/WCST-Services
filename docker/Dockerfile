@@ -6,8 +6,7 @@ COPY pom.xml /usr/src/app
 RUN mvn -f /usr/src/app/pom.xml clean package
 
 FROM openjdk:11-jre-slim
-ENV profile dev
-#RUN apt-get update
+
 COPY --from=builder usr/src/app/target/*.jar app.jar
 
 # ARG JAR_FILE
