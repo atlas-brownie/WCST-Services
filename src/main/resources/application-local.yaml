@@ -16,7 +16,7 @@ vaAuthHeaderValue: RrJGQZc6jpNp9NwKEn6GO2ZDq11MbdXm
 claimMetaDataTable: development
 
 performETagValidation: false
-persistClaimMetaData: true
+persistClaimMetaData: false
 
 clientSystemId: MBL-WCST
 sourceDocumentType: 21-22

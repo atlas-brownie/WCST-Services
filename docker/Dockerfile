@@ -14,7 +14,4 @@ COPY --from=builder usr/src/app/target/*.jar app.jar
 # ADD target/${JAR_FILE} app.jar
 EXPOSE 8080
 
-COPY run.sh /run.sh
-RUN ["chmod", "+x", "/run.sh"]
-
-ENTRYPOINT ["/run.sh"]
+ENTRYPOINT exec java $JAVA_OPTS -Dspring.profiles.active=dev -jar /app.jar
