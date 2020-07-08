@@ -3,7 +3,7 @@ pipeline {
 	environment {
 		HOME = '.'
 	}
-  
+
 	stages {
 		stage('Notify Start') {
             		steps {
@@ -11,7 +11,7 @@ pipeline {
                         	  message: 'Jenkins services pipeline build started'
             		}
         	}
-    
+
     		stage('Initialize') {
       			steps {
         			sh '''
@@ -21,7 +21,7 @@ pipeline {
         			'''
       			}
     		}
-		
+
 		stage('Code Quality') {
 			steps {
 				script {
@@ -49,7 +49,7 @@ pipeline {
 				}
 			}
 		}
-		
+
 		stage('Cleanup Old Docker Artifacts'){
 			steps{
 				sh 'docker image prune -f'
@@ -57,38 +57,38 @@ pipeline {
 				sh 'docker container prune -f'
 			}
 		}
-		
+
 		stage('Build Docker Image'){
 			steps {
 				script {
-					docker.build('dev-services-stack-ecr', "-f ./docker/Dockerfile .")
+					docker.build('dev1-services-stack-ecr', "-f ./docker/Dockerfile .")
 				}
 			}
 		}
-		
+
 		stage('Deploy Docker Image on AWS'){
 			steps {
 				script{
-					docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/dev-services-stack-ecr', 'ecr:us-east-1:pchong-aws-credentials'){
-						docker.image('dev-services-stack-ecr').push('latest')
+					docker.withRegistry('https://494587492891.dkr.ecr.us-east-1.amazonaws.com/dev1-services-stack-ecr', 'ecr:us-east-1:pchong-aws-credentials'){
+						docker.image('dev1-services-stack-ecr').push('latest')
 					}
 				}
 			}
 		}
-		
+
 		stage('Remove unused docker image'){
 			steps{
 				sh "docker image prune -f"
 			}
 		}
-		
+
 		stage('Deploy to ECS'){
 			steps{
-				sh 'aws ecs update-service --cluster dev-services-stack --service dev-services-stack-web --region us-east-1 --force-new-deployment'
+				sh 'aws ecs update-service --cluster dev1-services-stack --service dev1-services-stack-web --region us-east-1 --force-new-deployment'
 			}
 		}
 	}
-	
+
 	post {
 		success {
 			slackSend channel: '#dev-notifications',
