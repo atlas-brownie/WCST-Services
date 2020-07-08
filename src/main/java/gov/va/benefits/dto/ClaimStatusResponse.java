@@ -2,6 +2,7 @@ package gov.va.benefits.dto;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import lombok.Data;
 
@@ -20,5 +21,7 @@ public class ClaimStatusResponse implements Serializable {
 	private String claimStatus;
 
 	private Date submissionDate;
+	
+	private List<DataExchangeJounalEntry> journal;
 
 }

@@ -3,8 +3,10 @@ package gov.va.benefits.service.impl;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,6 +40,7 @@ import org.springframework.stereotype.Service;
 import gov.va.benefits.domain.ClaimRecord;
 import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
+import gov.va.benefits.dto.DataExchangeJounalEntry;
 import gov.va.benefits.service.CSPInterfaceService;
 import gov.va.benefits.service.ClaimsService;
 import gov.va.benefits.utils.HttpClientBean;
@@ -90,9 +93,13 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		validateClaimRequest(aClaimDetails);
 
-		ClaimRecord claimRecord = submitClaimRequest(aClaimDetails);
+		List<DataExchangeJounalEntry> journalList = new ArrayList<>();
+
+		ClaimRecord claimRecord = submitClaimRequest(aClaimDetails, journalList);
 
 		ClaimStatusResponse statusResponse = saveClaimDetails(claimRecord);
+
+		statusResponse.setJournal(journalList);
 
 		LOGGER.debug("end processClaimRequest()...");
 
@@ -145,11 +152,20 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * information to the VA benefit application...
 	 * 
 	 * @param aClaimDetails
+	 * @param aJournalList
 	 * @return
 	 * @throws IOException
 	 */
-	private ClaimRecord submitClaimRequest(ClaimDetails aClaimDetails) throws IOException {
-		Pair<String, String> endpointInfo = extractIntakeEndpointInfo();
+	private ClaimRecord submitClaimRequest(ClaimDetails aClaimDetails, List<DataExchangeJounalEntry> aJournalList)
+			throws IOException {
+		Pair<String, String> endpointInfo = extractIntakeEndpointInfo(aJournalList);
+
+		DataExchangeJounalEntry journalEntry = new DataExchangeJounalEntry();
+		aJournalList.add(journalEntry);
+
+		journalEntry.setTargetUrl(endpointInfo.getLeft());
+		Map<String, String> attrMap = new HashMap<>();
+		journalEntry.setAttributeMap(attrMap);
 
 		MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 		entityBuilder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
@@ -170,8 +186,12 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		HttpUriRequest multipartRequest = reqBuilder.build();
 
+		journalEntry.setRequestSentTime(new Date());
+
 		ResponseHandler<String> responseHandler = response -> {
 			int status = response.getStatusLine().getStatusCode();
+			journalEntry.setResponseCode(String.valueOf(status));
+
 			if (status >= 200 && status < 300) {
 				Header[] eTagHeaders = response.getHeaders("ETag");
 				if (eTagHeaders != null && eTagHeaders.length >= 0) {
@@ -188,11 +208,14 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		String eTagHeaderValue = httpClientBean.execute(multipartRequest, responseHandler);
 
+		journalEntry.setResponseReceivedTime(new Date());
+		attrMap.put("eTagHeaderValue", eTagHeaderValue);
+
 		ClaimRecord claimRec = populateClaimRecord(aClaimDetails, endpointInfo);
 
 		byte[] payloadBytes = extractPayloadSent(mutiPartHttpEntity);
 
-		validateResponse(claimRec, eTagHeaderValue, payloadBytes);
+		validateResponse(claimRec, eTagHeaderValue, payloadBytes, aJournalList);
 
 		return claimRec;
 	}
@@ -202,7 +225,7 @@ public class ClaimServiceImpl implements ClaimsService {
 			try {
 				return IOUtils.toByteArray(aMutiPartHttpEntity.getContent());
 			} catch (UnsupportedOperationException | IOException exp) {
-				LOGGER.info("Failed to read stream content!", exp);
+				LOGGER.info("Failed to read stream content!");
 			}
 		}
 
@@ -215,10 +238,12 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * @param claimRec
 	 * @param eTagHeaderValue
 	 * @param payload
+	 * @param aJournalList
 	 * @throws IOException
 	 */
-	private void validateResponse(ClaimRecord claimRec, String eTagHeaderValue, byte[] payload) throws IOException {
-		String requestStatus = extractRequestStatusByVaTrackingNumber(claimRec.getVaTrackerCode());
+	private void validateResponse(ClaimRecord claimRec, String eTagHeaderValue, byte[] payload,
+			List<DataExchangeJounalEntry> aJournalList) throws IOException {
+		String requestStatus = extractRequestStatusByVaTrackingNumber(claimRec.getVaTrackerCode(), aJournalList);
 
 		claimRec.setCurrentStatus(requestStatus);
 
@@ -284,13 +309,32 @@ public class ClaimServiceImpl implements ClaimsService {
 	@Override
 	public String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber)
 			throws IOException, ClientProtocolException {
-		HttpGet extractClient = new HttpGet(String.format("%s/%s", claimsIntakePointerUrl, vaTrackingNumber));
+		List<DataExchangeJounalEntry> journalList = new ArrayList<>();
+
+		return extractRequestStatusByVaTrackingNumber(vaTrackingNumber, journalList);
+	}
+
+	public String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber,
+			List<DataExchangeJounalEntry> aJournalList) throws IOException, ClientProtocolException {
+		DataExchangeJounalEntry journalEntry = new DataExchangeJounalEntry();
+		aJournalList.add(journalEntry);
+
+		Map<String, String> attrMap = new HashMap<>();
+		journalEntry.setAttributeMap(attrMap);
+
+		String targetUrl = String.format("%s/%s", claimsIntakePointerUrl, vaTrackingNumber);
+		journalEntry.setTargetUrl(targetUrl);
+
+		HttpGet extractClient = new HttpGet(targetUrl);
 
 		extractClient.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
 		extractClient.addHeader("accept", "application/json");
 
+		journalEntry.setRequestSentTime(new Date());
+
 		ResponseHandler<String> responseHandler = response -> {
 			int status = response.getStatusLine().getStatusCode();
+			journalEntry.setResponseCode(String.valueOf(status));
 			if (status >= 200 && status < 300) {
 				HttpEntity entity = response.getEntity();
 				return entity != null ? EntityUtils.toString(entity) : null;
@@ -306,6 +350,9 @@ public class ClaimServiceImpl implements ClaimsService {
 		JSONObject jsonObj = new JSONObject(result);
 
 		String requestStatus = jsonObj.getJSONObject("data").getJSONObject("attributes").getString("status");
+
+		attrMap.put("receivedContent", result);
+		journalEntry.setResponseReceivedTime(new Date());
 
 		return requestStatus;
 	}
@@ -345,13 +392,23 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * target end-point URL to put claim file info and tracking number details for
 	 * the same. The method returns a Pair and the first element of the pair will be
 	 * the target end-point URL string and the second element will be the tracking
-	 * number..
+	 * number...
+	 * 
+	 * @param aJournalList
 	 * 
 	 * @return
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	private Pair<String, String> extractIntakeEndpointInfo() throws ClientProtocolException, IOException {
+	private Pair<String, String> extractIntakeEndpointInfo(List<DataExchangeJounalEntry> aJournalList)
+			throws ClientProtocolException, IOException {
+		DataExchangeJounalEntry journalEntry = new DataExchangeJounalEntry();
+		aJournalList.add(journalEntry);
+		journalEntry.setTargetUrl(claimsIntakePointerUrl);
+
+		Map<String, String> attrMap = new HashMap<>();
+		journalEntry.setAttributeMap(attrMap);
+
 		HttpPost extractClient = new HttpPost(claimsIntakePointerUrl);
 
 		extractClient.setHeader(vaAuthHeaderKey, vaAuthHeaderValue);
@@ -359,6 +416,8 @@ public class ClaimServiceImpl implements ClaimsService {
 
 		ResponseHandler<String> responseHandler = response -> {
 			int status = response.getStatusLine().getStatusCode();
+			journalEntry.setResponseCode(String.valueOf(status));
+
 			if (status >= 200 && status < 300) {
 				HttpEntity entity = response.getEntity();
 				return entity != null ? EntityUtils.toString(entity) : null;
@@ -369,12 +428,17 @@ public class ClaimServiceImpl implements ClaimsService {
 			}
 		};
 
+		journalEntry.setRequestSentTime(new Date());
+
 		String result = httpClientBean.execute(extractClient, responseHandler);
 
 		JSONObject jsonObj = new JSONObject(result);
 
 		String uploadLocation = jsonObj.getJSONObject("data").getJSONObject("attributes").getString("location");
 		String guid = jsonObj.getJSONObject("data").getJSONObject("attributes").getString("guid");
+
+		attrMap.put("receivedContent", result);
+		journalEntry.setResponseReceivedTime(new Date());
 
 		return new ImmutablePair<String, String>(uploadLocation, guid);
 	}
