@@ -12,10 +12,6 @@ public class DataExchangeJounalEntry implements Serializable {
 
 	private String targetUrl;
 
-//	private Map<String, String> requestHeaders;
-//
-//	private Map<String, String> responsetHeaders;
-
 	private Map<String, String> attributeMap;
 
 	private String responseCode;

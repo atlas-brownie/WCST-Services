@@ -3,8 +3,10 @@ package gov.va.benefits.controller.v1;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
+import gov.va.benefits.dto.DataExchangeJounalEntry;
 import gov.va.benefits.dto.PayloadWrapper;
 import gov.va.benefits.service.ClaimsService;
 
@@ -48,8 +51,9 @@ public class ClaimsController {
 	private ClaimsService claimsService;
 
 	@PostMapping(path = "/uploads", headers = "content-type=multipart/form-data")
-	public PayloadWrapper<ClaimStatusResponse> uploadClaim(@RequestParam String firstName, @RequestParam String lastName,
-			@RequestParam String zipCode, @RequestParam String ssn, @RequestPart MultipartFile claimFile) throws IOException {
+	public PayloadWrapper<ClaimStatusResponse> uploadClaim(@RequestParam String firstName,
+			@RequestParam String lastName, @RequestParam String zipCode, @RequestParam String ssn,
+			@RequestPart MultipartFile claimFile) throws IOException {
 
 		LOGGER.debug("begin uploadClaim()...");
 
@@ -60,7 +64,7 @@ public class ClaimsController {
 		claimDetails.setSsn(ssn);
 		claimDetails.setClaimFileName(claimFile.getName());
 		claimDetails.setClaimeFileContent(claimFile.getBytes());
-		
+
 		BindingResult bResult = new BeanPropertyBindingResult(claimDetails, "claimDetails");
 
 		validator.validate(claimDetails, bResult);
@@ -90,13 +94,19 @@ public class ClaimsController {
 	}
 
 	@GetMapping(path = "/uploads/{trackingNumber}")
-	public PayloadWrapper<String> getClaimStatus(@PathVariable String trackingNumber)
+	public PayloadWrapper<ClaimStatusResponse> getClaimStatus(@PathVariable String trackingNumber)
 			throws ClientProtocolException, IOException {
 		LOGGER.debug("begin getClaimStatus()...");
 
-		String status = claimsService.extractRequestStatusBySimpleTrackingCode(trackingNumber);
+		Pair<String, List<DataExchangeJounalEntry>> results = claimsService
+				.extractRequestStatusBySimpleTrackingCode(trackingNumber);
 
-		PayloadWrapper<String> responsePayload = new PayloadWrapper<>(status);
+		ClaimStatusResponse statusResponse = new ClaimStatusResponse();
+		statusResponse.setClaimStatus(results.getLeft());
+		statusResponse.setJournal(results.getRight());
+		statusResponse.setTrackingCode(trackingNumber);
+
+		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
 
 		LOGGER.debug("end getClaimStatus()...");
 
@@ -104,13 +114,19 @@ public class ClaimsController {
 	}
 
 	@GetMapping(path = "/uploads/va/{vaTrackingNumber}")
-	public PayloadWrapper<String> getClaimStatusByVaTrackingCode(@PathVariable String vaTrackingNumber)
+	public PayloadWrapper<ClaimStatusResponse> getClaimStatusByVaTrackingCode(@PathVariable String vaTrackingNumber)
 			throws ClientProtocolException, IOException {
 		LOGGER.debug("begin getClaimStatusByVaTrackingCode()...");
 
-		String status = claimsService.extractRequestStatusByVaTrackingNumber(vaTrackingNumber);
+		Pair<String, List<DataExchangeJounalEntry>> results = claimsService
+				.extractRequestStatusByVaTrackingNumber(vaTrackingNumber);
 
-		PayloadWrapper<String> responsePayload = new PayloadWrapper<>(status);
+		ClaimStatusResponse statusResponse = new ClaimStatusResponse();
+		statusResponse.setClaimStatus(results.getLeft());
+		statusResponse.setJournal(results.getRight());
+		statusResponse.setVaTrackingCode(vaTrackingNumber);
+
+		PayloadWrapper<ClaimStatusResponse> responsePayload = new PayloadWrapper<>(statusResponse);
 
 		LOGGER.debug("end getClaimStatusByVaTrackingCode()...");
 

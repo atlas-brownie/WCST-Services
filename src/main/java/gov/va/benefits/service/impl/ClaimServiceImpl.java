@@ -283,8 +283,8 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * extractRequestStatusBySimpleTrackingCode(java.lang.String)
 	 */
 	@Override
-	public String extractRequestStatusBySimpleTrackingCode(String simpleTrackingCode)
-			throws IOException, ClientProtocolException {
+	public Pair<String, List<DataExchangeJounalEntry>> extractRequestStatusBySimpleTrackingCode(
+			String simpleTrackingCode) throws IOException, ClientProtocolException {
 		Map<String, String> searchCriteria = new HashMap<>();
 
 		searchCriteria.put("simpleTrackingCode", simpleTrackingCode);
@@ -307,11 +307,13 @@ public class ClaimServiceImpl implements ClaimsService {
 	 * java.lang.String)
 	 */
 	@Override
-	public String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber)
+	public Pair<String, List<DataExchangeJounalEntry>> extractRequestStatusByVaTrackingNumber(String vaTrackingNumber)
 			throws IOException, ClientProtocolException {
 		List<DataExchangeJounalEntry> journalList = new ArrayList<>();
 
-		return extractRequestStatusByVaTrackingNumber(vaTrackingNumber, journalList);
+		String statusValue = extractRequestStatusByVaTrackingNumber(vaTrackingNumber, journalList);
+
+		return new ImmutablePair<String, List<DataExchangeJounalEntry>>(statusValue, journalList);
 	}
 
 	public String extractRequestStatusByVaTrackingNumber(String vaTrackingNumber,

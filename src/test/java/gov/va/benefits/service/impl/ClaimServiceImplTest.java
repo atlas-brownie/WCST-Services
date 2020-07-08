@@ -5,10 +5,12 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import javax.validation.ValidationException;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -29,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import gov.va.benefits.domain.ClaimRecord;
 import gov.va.benefits.dto.ClaimDetails;
 import gov.va.benefits.dto.ClaimStatusResponse;
+import gov.va.benefits.dto.DataExchangeJounalEntry;
 import gov.va.benefits.service.CSPInterfaceService;
 import gov.va.benefits.utils.HttpClientBean;
 
@@ -82,7 +85,7 @@ public class ClaimServiceImplTest {
 		ReflectionTestUtils.setField(claimServiceImpl, "clientSystemId", "clientSystemId");
 		ReflectionTestUtils.setField(claimServiceImpl, "sourceDocumentType", "sourceDocumentType");
 	}
-	
+
 	@Test
 	public void testProcessClaimRequest() throws IOException {
 		ClaimDetails claimDetails = new ClaimDetails();
@@ -113,9 +116,11 @@ public class ClaimServiceImplTest {
 	public void testExtractRequestStatusBySimpleTrackingCode() throws ClientProtocolException, IOException {
 		String mockSimpleTrackingCode = RandomStringUtils.randomAlphanumeric(32);
 
-		String statusResponse = claimServiceImpl.extractRequestStatusBySimpleTrackingCode(mockSimpleTrackingCode);
+		Pair<String, List<DataExchangeJounalEntry>> results = claimServiceImpl
+				.extractRequestStatusBySimpleTrackingCode(mockSimpleTrackingCode);
 
-		assertNotNull("Missing Claim Status!", statusResponse);
+		assertNotNull("Returned Result is Null!", results);
+		assertNotNull("Missing Claim Status!", results.getLeft());
 		Mockito.verify(httpClientBean).execute(Mockito.any(HttpGet.class), Mockito.any());
 	}
 
@@ -123,9 +128,11 @@ public class ClaimServiceImplTest {
 	public void testExtractRequestStatusByVaTrackingNumber() throws ClientProtocolException, IOException {
 		String mockVATrackingNumber = RandomStringUtils.randomAlphanumeric(32);
 
-		String statusResponse = claimServiceImpl.extractRequestStatusByVaTrackingNumber(mockVATrackingNumber);
+		Pair<String, List<DataExchangeJounalEntry>> results = claimServiceImpl
+				.extractRequestStatusByVaTrackingNumber(mockVATrackingNumber);
 
-		assertNotNull("Missing Claim Status!", statusResponse);
+		assertNotNull("Returned Result is Null!", results);
+		assertNotNull("Missing Claim Status!", results.getLeft());
 	}
 
 }
