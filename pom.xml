@@ -67,12 +67,7 @@
 			<scope>test</scope>
 			<version>2.1.6.RELEASE</version>
 		</dependency>
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>42.2.8</version>
-		</dependency>
-
+		
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
@@ -89,7 +84,7 @@
 		<dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-dynamodb</artifactId>
-            <version>1.11.6</version>
+            <version>1.11.817</version>
         </dependency>
         
         <dependency>

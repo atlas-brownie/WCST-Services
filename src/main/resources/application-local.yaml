@@ -16,7 +16,9 @@ vaAuthHeaderValue: RrJGQZc6jpNp9NwKEn6GO2ZDq11MbdXm
 claimMetaDataTable: development
 
 performETagValidation: false
-persistClaimMetaData: false
+persistClaimMetaData: true
+localDB: true
+localDBEndPoint: http://db:8000
 
 clientSystemId: MBL-WCST
 sourceDocumentType: 21-22
