@@ -8,7 +8,6 @@ import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.assertj.core.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,12 +55,37 @@ public class ClaimsControllerTest {
 		MockMultipartFile contentFile = new MockMultipartFile("claimFile", "claim_form.pdf", "application/pdf",
 				RandomStringUtils.random(80).getBytes());
 
-		mockClaimsController.perform(MockMvcRequestBuilders.multipart("/api/v1/uploads").file(contentFile)
-				.param("firstName", RandomStringUtils.randomAlphabetic(30))
-				.param("lastName", RandomStringUtils.randomAlphabetic(30))
-				.param("zipCode", RandomStringUtils.randomNumeric(5)).param("ssn", RandomStringUtils.randomNumeric(9)))
-				.andExpect(MockMvcResultMatchers.status().is(200));
+		mockClaimsController
+				.perform(MockMvcRequestBuilders.multipart("/api/v1/uploads").file(contentFile)
+						.param("firstName", RandomStringUtils.randomAlphabetic(30))
+						.param("lastName", RandomStringUtils.randomAlphabetic(30))
+						.param("zipCode", RandomStringUtils.randomNumeric(5))
+						.param("ssn", RandomStringUtils.randomNumeric(9)))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.payload").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.length").value(1))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.hasError").value(false))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Success"));
+	}
 
+	@Test
+	public void testUploadClaimNegative() throws Exception {
+		ClaimStatusResponse stausResponse = new ClaimStatusResponse();
+
+		Mockito.when(claimsService.processClaimRequest(Mockito.any(ClaimDetails.class))).thenReturn(stausResponse);
+
+		MockMultipartFile contentFile = new MockMultipartFile("claimFile", "claim_form.pdf", "application/pdf",
+				RandomStringUtils.random(80).getBytes());
+
+		mockClaimsController
+				.perform(MockMvcRequestBuilders.multipart("/api/v1/uploads").file(contentFile)
+						.param("zipCode", RandomStringUtils.randomNumeric(5))
+						.param("ssn", RandomStringUtils.randomNumeric(9)))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.payload").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.hasError").value(true));
 	}
 
 	@Test
@@ -76,8 +100,11 @@ public class ClaimsControllerTest {
 		Mockito.when(claimsService.extractRequestStatusBySimpleTrackingCode(simpleTrackingCode)).thenReturn(results);
 
 		mockClaimsController.perform(MockMvcRequestBuilders.get("/api/v1/uploads/" + simpleTrackingCode))
-				.andExpect(MockMvcResultMatchers.status().is(200))
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.payload").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.length").value(1))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.hasError").value(false));
 	}
 
 	@Test
@@ -90,9 +117,12 @@ public class ClaimsControllerTest {
 		Pair<String, List<DataExchangeJounalEntry>> results = new ImmutablePair<>(statusStr, entryList);
 		Mockito.when(claimsService.extractRequestStatusByVaTrackingNumber(vaTrackingNumber)).thenReturn(results);
 
-		mockClaimsController.perform(MockMvcRequestBuilders.get("/api/v1/uploads/va" + vaTrackingNumber))
-				.andExpect(MockMvcResultMatchers.status().is(200))
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+		mockClaimsController.perform(MockMvcRequestBuilders.get("/api/v1/uploads/va/" + vaTrackingNumber))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.payload").exists())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.length").value(1))
+				.andExpect(MockMvcResultMatchers.jsonPath("$.hasError").value(false));
 	}
 
 }
