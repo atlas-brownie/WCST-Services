@@ -212,6 +212,10 @@ public class ClaimServiceImpl implements ClaimsService {
 		attrMap.put("eTagHeaderValue", eTagHeaderValue);
 
 		ClaimRecord claimRec = populateClaimRecord(aClaimDetails, endpointInfo);
+		String vaTrackerCode = claimRec.getVaTrackerCode();
+		Pair<String, List<DataExchangeJounalEntry>> trackerJournalList = extractRequestStatusByVaTrackingNumber(vaTrackerCode);
+		claimRec.setCurrentStatus(trackerJournalList.getKey());
+		
 
 		byte[] payloadBytes = extractPayloadSent(mutiPartHttpEntity);
 
@@ -381,7 +385,7 @@ public class ClaimServiceImpl implements ClaimsService {
 		claimRecord.setVaFileLocation(aEndpointInfo.getLeft());
 		claimRecord.setVaTrackerCode(aEndpointInfo.getRight());
 
-		claimRecord.setCurrentStatus("Pending");
+		//claimRecord.setCurrentStatus("Pending");
 
 		claimRecord.setClaimFileName(aClaimDetails.getClaimFileName());
 		claimRecord.setClaimFileContent(aClaimDetails.getClaimeFileContent());
