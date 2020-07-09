@@ -2,11 +2,13 @@ package gov.va.benefits.service.impl;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,20 +27,31 @@ import org.springframework.stereotype.Service;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.ContainerCredentialsProvider;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.ScanOutcome;
 import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ResourceNotFoundException;
 
 import gov.va.benefits.domain.ClaimRecord;
 import gov.va.benefits.service.CSPInterfaceService;
@@ -60,6 +73,9 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@Value("${persistClaimMetaData:true}")
 	private boolean persistClaimMetaData;
+	
+	@Value("${localDB:false}")
+	private boolean localDB;
 
 	private AmazonDynamoDB dynamoDB;
 
@@ -82,13 +98,52 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 
 	@PostConstruct
 	public void initBean() {
+		
 		if (persistClaimMetaData) {
-			AWSCredentialsProvider provider = new ContainerCredentialsProvider();
-			AWSCredentials credential = provider.getCredentials();
-			dynamoDB = new AmazonDynamoDBClient(credential);
-			dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
-		}
+			if(localDB) {
+				AWSCredentials credential = new BasicAWSCredentials("Dummy", "Dummy");
+				dynamoDB = new AmazonDynamoDBClient(credential);
+				dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
+				dynamoDB.setEndpoint("http://localhost:8000");				
+				createLocalDynamoTable();
 
+			} else {
+				AWSCredentialsProvider provider = new ContainerCredentialsProvider();
+				AWSCredentials credential = provider.getCredentials();
+				dynamoDB = new AmazonDynamoDBClient(credential);
+				dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
+			}
+		}		
+
+	}
+	
+	private void createLocalDynamoTable() {
+		
+		 
+		KeySchemaElement keyElement = new KeySchemaElement();
+		keyElement.setAttributeName(ID_COLUMN);
+		keyElement.setKeyType(KeyType.HASH);
+		
+		List<AttributeDefinition> attributeDefinitions= new ArrayList<AttributeDefinition>();
+		attributeDefinitions.add(new AttributeDefinition().withAttributeName(ID_COLUMN).withAttributeType("S"));
+
+		
+		CreateTableRequest request
+		= new CreateTableRequest()
+		.withTableName(dynamoDBTableName)
+		.withKeySchema(keyElement)
+		.withAttributeDefinitions(attributeDefinitions)
+		.withProvisionedThroughput(new ProvisionedThroughput()
+	            .withReadCapacityUnits(5L)
+	            .withWriteCapacityUnits(6L));
+		
+		try {
+			dynamoDB.describeTable(dynamoDBTableName);
+		} catch (final ResourceNotFoundException e) {
+			LOGGER.info("Dynamo db table {} doesn't exist, attempting to create....", dynamoDBTableName);
+			dynamoDB.createTable(request);
+		}
+	
 	}
 
 	@PreDestroy
