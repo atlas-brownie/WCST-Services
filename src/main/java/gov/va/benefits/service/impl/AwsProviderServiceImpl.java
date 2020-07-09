@@ -104,7 +104,7 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 		
 		if (persistClaimMetaData) {
 			if(localDB) {
-				LOGGER.debug("*******Local DB configuration **********");
+				LOGGER.debug("*******Local Dynamo DB configuration **********");
 				AWSCredentials credential = new BasicAWSCredentials("Dummy", "Dummy");
 				dynamoDB = new AmazonDynamoDBClient(credential);
 				dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
@@ -112,10 +112,9 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 				createLocalDynamoTable();
 
 			} else {
-				LOGGER.debug("*******AWS DB configuration **********");
+				LOGGER.debug("*******AWS Dynamo DB configuration **********");
 				AWSCredentialsProvider provider = new ContainerCredentialsProvider();
-				AWSCredentials credential = provider.getCredentials();
-				dynamoDB = new AmazonDynamoDBClient(credential);
+				dynamoDB = new AmazonDynamoDBClient(provider);
 				dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
 			}
 		}		
