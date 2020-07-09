@@ -38,7 +38,7 @@ public class AppConfig {
 	}
 
 	@Bean
-	@Profile("qa")
+	@Profile({"qa", "stage"})
 	public PropertySourcesPlaceholderConfigurer fetchQAProperties() {
 		PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
 
