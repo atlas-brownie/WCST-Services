@@ -76,6 +76,9 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 	
 	@Value("${localDB:false}")
 	private boolean localDB;
+	
+	@Value("${localDBEndPoint:testURL}")
+	private String localDBEndPoint;
 
 	private AmazonDynamoDB dynamoDB;
 
@@ -101,13 +104,15 @@ public class AwsProviderServiceImpl implements CSPInterfaceService {
 		
 		if (persistClaimMetaData) {
 			if(localDB) {
+				LOGGER.debug("*******Local DB configuration **********");
 				AWSCredentials credential = new BasicAWSCredentials("Dummy", "Dummy");
 				dynamoDB = new AmazonDynamoDBClient(credential);
 				dynamoDB.setRegion(Region.getRegion(Regions.US_EAST_1));
-				dynamoDB.setEndpoint("http://localhost:8000");				
+				dynamoDB.setEndpoint(localDBEndPoint);				
 				createLocalDynamoTable();
 
 			} else {
+				LOGGER.debug("*******AWS DB configuration **********");
 				AWSCredentialsProvider provider = new ContainerCredentialsProvider();
 				AWSCredentials credential = provider.getCredentials();
 				dynamoDB = new AmazonDynamoDBClient(credential);

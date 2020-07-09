@@ -18,6 +18,7 @@ claimMetaDataTable: development
 performETagValidation: false
 persistClaimMetaData: true
 localDB: true
+localDBEndPoint: http://localhost:8000
 
 clientSystemId: MBL-WCST
 sourceDocumentType: 21-22
